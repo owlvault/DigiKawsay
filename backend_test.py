@@ -386,9 +386,18 @@ class DigiKawsayAPITester:
         campaign_created = False
         for role in ["admin", "facilitator"]:
             if role in self.tokens:
-                success, _ = self.test_create_campaign(role)
+                success, campaign_data = self.test_create_campaign(role)
                 if success:
                     campaign_created = True
+                    # Activate the campaign
+                    campaign_id = campaign_data['id']
+                    activate_success, _ = self.run_test(
+                        f"Activate Campaign ({role})",
+                        "PATCH",
+                        f"campaigns/{campaign_id}/status?status=active",
+                        200,
+                        token=self.tokens[role]
+                    )
                     break
         
         # List campaigns
