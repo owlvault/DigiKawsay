@@ -394,7 +394,7 @@ async def create_campaign(campaign_data: CampaignCreate, current_user: dict = De
     
     campaign = Campaign(
         **campaign_data.model_dump(),
-        tenant_id=current_user.get("tenant_id", "default"),
+        tenant_id=current_user.get("tenant_id") or "default",
         created_by=current_user["id"]
     )
     
