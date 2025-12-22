@@ -8,7 +8,10 @@ import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CampaignsPage } from "./pages/CampaignsPage";
 import { CreateCampaignPage } from "./pages/CreateCampaignPage";
+import { CampaignDetailPage } from "./pages/CampaignDetailPage";
 import { ChatPage } from "./pages/ChatPage";
+import { ScriptsPage } from "./pages/ScriptsPage";
+import { ScriptEditorPage } from "./pages/ScriptEditorPage";
 
 // Components
 import { Layout } from "./components/Layout";
@@ -62,10 +65,10 @@ function App() {
             }
           />
           <Route
-            path="/campaigns/:id"
+            path="/campaigns/:campaignId"
             element={
               <ProtectedRoute>
-                <CampaignsPage />
+                <CampaignDetailPage />
               </ProtectedRoute>
             }
           />
@@ -74,6 +77,32 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Script Routes - Phase 2 */}
+          <Route
+            path="/scripts"
+            element={
+              <ProtectedRoute>
+                <ScriptsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scripts/new"
+            element={
+              <ProtectedRoute>
+                <ScriptEditorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scripts/:scriptId"
+            element={
+              <ProtectedRoute>
+                <ScriptEditorPage />
               </ProtectedRoute>
             }
           />

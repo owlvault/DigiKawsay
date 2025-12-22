@@ -24,7 +24,8 @@ import {
   ChevronDown,
   Sparkles,
   User,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -58,6 +59,7 @@ export const Layout = ({ children }) => {
   const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['all'] },
     { to: '/campaigns', icon: MessageCircle, label: 'Campañas', roles: ['all'] },
+    { to: '/scripts', icon: FileText, label: 'Guiones', roles: ['admin', 'facilitator'] },
     { to: '/insights', icon: BarChart3, label: 'Hallazgos', roles: ['admin', 'facilitator', 'analyst'], disabled: true },
     { to: '/network', icon: Network, label: 'Red Social', roles: ['admin', 'facilitator', 'analyst'], disabled: true },
     { to: '/roadmap', icon: Route, label: 'Roadmap', roles: ['admin', 'facilitator', 'sponsor'], disabled: true },
