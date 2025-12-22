@@ -140,6 +140,9 @@ class DigiKawsayAPITester:
             self.tokens[role] = response['access_token']
             self.users[role] = response['user']
             return True, response
+        
+        # If hardcoded credentials failed, skip login test for this role
+        print(f"   ⚠️  Skipping login test for {role} - using registered user token")
         return False, {}
 
     def test_get_current_user(self, role="participant"):
