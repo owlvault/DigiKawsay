@@ -60,7 +60,7 @@ export const Layout = ({ children }) => {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['all'] },
     { to: '/campaigns', icon: MessageCircle, label: 'Campañas', roles: ['all'] },
     { to: '/scripts', icon: FileText, label: 'Guiones', roles: ['admin', 'facilitator'] },
-    { to: '/insights', icon: BarChart3, label: 'Hallazgos', roles: ['admin', 'facilitator', 'analyst'], disabled: true },
+    { to: '/taxonomy', icon: BarChart3, label: 'Taxonomía', roles: ['admin', 'facilitator', 'analyst'] },
     { to: '/network', icon: Network, label: 'Red Social', roles: ['admin', 'facilitator', 'analyst'], disabled: true },
     { to: '/roadmap', icon: Route, label: 'Roadmap', roles: ['admin', 'facilitator', 'sponsor'], disabled: true },
     { to: '/governance', icon: Shield, label: 'Gobernanza', roles: ['admin'], disabled: true },
