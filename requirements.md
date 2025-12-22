@@ -42,14 +42,22 @@ DigiKawsay es una plataforma de facilitación conversacional con VAL, un chatbot
   - Tab Invitaciones: Enviar y listar invitaciones
 - **Cobertura**: Visualización de tasas de participación y completitud
 
-## 🔄 FASES PENDIENTES
+## ✅ FASE 3 - Completada
 
-### FASE 3 - Pipeline y RunaCultur
-- [ ] Pseudonimización/anonimización de transcripciones
-- [ ] Extracción de insights con IA
-- [ ] Panel de hallazgos (Insights Workbench)
-- [ ] Taxonomía configurable (temas, tensiones, símbolos)
-- [ ] Flujo de validación participativa (member-checking)
+### Backend - Nuevas funcionalidades
+- **Insights (Hallazgos)**: CRUD completo con tipos (tema, tensión, símbolo, oportunidad, riesgo)
+- **Extracción IA**: Extracción automática de insights desde transcripciones usando Gemini Flash
+- **Pseudonimización**: Servicio para anonimizar transcripciones (emails, teléfonos, nombres)
+- **Taxonomía**: Categorías configurables para clasificar hallazgos
+- **Member-checking**: Sistema de validación participativa de insights
+- **Stats de Insights**: Endpoint con métricas por tipo, estado, sentimiento
+
+### Frontend - Nuevas páginas
+- **Insights Workbench** (/insights/:campaignId): Panel de hallazgos con filtros y validación
+- **Crear Insight** (/insights/:campaignId/new): Formulario para agregar hallazgos manuales
+- **Taxonomía** (/taxonomy): Gestión de categorías con colores y tipos
+
+## 🔄 FASES PENDIENTES
 
 ### FASE 4 - RunaMap (SNA)
 - [ ] Construcción de grafo de red social
