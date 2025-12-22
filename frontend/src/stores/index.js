@@ -80,13 +80,15 @@ export const useAuthStore = create(
 export const useCampaignStore = create((set) => ({
   campaigns: [],
   currentCampaign: null,
+  coverage: null,
   isLoading: false,
   error: null,
 
-  fetchCampaigns: async () => {
+  fetchCampaigns: async (status = null) => {
     set({ isLoading: true });
     try {
-      const response = await axios.get('/campaigns/');
+      const url = status ? `/campaigns/?status=${status}` : '/campaigns/';
+      const response = await axios.get(url);
       set({ campaigns: response.data, isLoading: false });
     } catch (error) {
       set({ error: error.message, isLoading: false });
@@ -120,17 +122,227 @@ export const useCampaignStore = create((set) => ({
     }
   },
 
+  updateCampaign: async (id, campaignData) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.put(`/campaigns/${id}`, campaignData);
+      set((state) => ({
+        campaigns: state.campaigns.map((c) => c.id === id ? response.data : c),
+        currentCampaign: response.data,
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
   updateCampaignStatus: async (id, status) => {
     try {
       await axios.patch(`/campaigns/${id}/status?status=${status}`);
       set((state) => ({
         campaigns: state.campaigns.map((c) =>
           c.id === id ? { ...c, status } : c
-        )
+        ),
+        currentCampaign: state.currentCampaign?.id === id 
+          ? { ...state.currentCampaign, status } 
+          : state.currentCampaign
       }));
       return { success: true };
     } catch (error) {
       return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  getCoverage: async (id) => {
+    try {
+      const response = await axios.get(`/campaigns/${id}/coverage`);
+      set({ coverage: response.data });
+      return response.data;
+    } catch (error) {
+      return null;
+    }
+  }
+}));
+
+// Script Store (NEW - Phase 2)
+export const useScriptStore = create((set) => ({
+  scripts: [],
+  currentScript: null,
+  versions: [],
+  isLoading: false,
+  error: null,
+
+  fetchScripts: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get('/scripts/');
+      set({ scripts: response.data, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  getScript: async (id) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`/scripts/${id}`);
+      set({ currentScript: response.data, isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+      return null;
+    }
+  },
+
+  createScript: async (scriptData) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post('/scripts/', scriptData);
+      set((state) => ({
+        scripts: [...state.scripts, response.data],
+        currentScript: response.data,
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  updateScript: async (id, scriptData) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.put(`/scripts/${id}`, scriptData);
+      set((state) => ({
+        scripts: state.scripts.map((s) => s.id === id ? response.data : s),
+        currentScript: response.data,
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  duplicateScript: async (id) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post(`/scripts/${id}/duplicate`);
+      set((state) => ({
+        scripts: [...state.scripts, response.data],
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  getVersions: async (id) => {
+    try {
+      const response = await axios.get(`/scripts/${id}/versions`);
+      set({ versions: response.data.versions || [] });
+      return response.data.versions;
+    } catch (error) {
+      return [];
+    }
+  }
+}));
+
+// Invite Store (NEW - Phase 2)
+export const useInviteStore = create((set) => ({
+  invites: [],
+  myInvites: [],
+  isLoading: false,
+  error: null,
+
+  fetchCampaignInvites: async (campaignId, status = null) => {
+    set({ isLoading: true });
+    try {
+      const url = status 
+        ? `/invites/campaign/${campaignId}?status=${status}` 
+        : `/invites/campaign/${campaignId}`;
+      const response = await axios.get(url);
+      set({ invites: response.data, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  fetchMyInvites: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get('/invites/my-invites');
+      set({ myInvites: response.data, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
+    }
+  },
+
+  createInvite: async (inviteData) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post('/invites/', inviteData);
+      set((state) => ({
+        invites: [...state.invites, response.data],
+        isLoading: false
+      }));
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  createBulkInvites: async (bulkData) => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.post('/invites/bulk', bulkData);
+      set({ isLoading: false });
+      return { success: true, data: response.data };
+    } catch (error) {
+      set({ isLoading: false });
+      return { success: false, error: error.response?.data?.detail };
+    }
+  },
+
+  respondToInvite: async (inviteId, accepted) => {
+    try {
+      const response = await axios.patch(`/invites/${inviteId}/respond?accepted=${accepted}`);
+      set((state) => ({
+        myInvites: state.myInvites.filter((i) => i.id !== inviteId)
+      }));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.response?.data?.detail };
+    }
+  }
+}));
+
+// Users Store (NEW - Phase 2)
+export const useUsersStore = create((set) => ({
+  users: [],
+  isLoading: false,
+  error: null,
+
+  fetchUsers: async (role = null, department = null) => {
+    set({ isLoading: true });
+    try {
+      let url = '/users/';
+      const params = [];
+      if (role) params.push(`role=${role}`);
+      if (department) params.push(`department=${department}`);
+      if (params.length > 0) url += '?' + params.join('&');
+      
+      const response = await axios.get(url);
+      set({ users: response.data, isLoading: false });
+    } catch (error) {
+      set({ error: error.message, isLoading: false });
     }
   }
 }));
@@ -245,7 +457,6 @@ export const useChatStore = create((set) => ({
   sendMessage: async (sessionId, message) => {
     set({ isLoading: true });
     try {
-      // Add user message immediately
       const userMsg = { role: 'user', content: message, timestamp: new Date().toISOString() };
       set((state) => ({ messages: [...state.messages, userMsg] }));
 
@@ -254,7 +465,6 @@ export const useChatStore = create((set) => ({
         message
       });
 
-      // Add assistant response
       const assistantMsg = {
         role: 'assistant',
         content: response.data.message,
