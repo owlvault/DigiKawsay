@@ -23,18 +23,26 @@ DigiKawsay es una plataforma de facilitación conversacional con VAL, un chatbot
 - **Consentimiento**: Modal de aceptación antes de participar
 - **Layout**: Navegación sidebar con rutas protegidas
 
-### Diseño
-- Corporativo profesional en tonos azul (Slate 900) y naranja (Orange 500)
-- Tipografía: Outfit (headings) + Inter (body)
-- Componentes Shadcn/UI
+## ✅ FASE 2 - Completada
+
+### Backend - Nuevas funcionalidades
+- **Scripts (Guiones)**: CRUD completo con pasos/preguntas estructuradas
+- **Versionamiento**: Historial de versiones automático al editar guiones
+- **Duplicación**: Clonar guiones existentes
+- **Segmentos**: Modelo para segmentación de participantes
+- **Invitaciones**: Sistema individual y bulk para invitar participantes
+- **Cobertura**: Endpoint /campaigns/{id}/coverage con métricas de participación
+- **Actualización de campañas**: PUT para editar toda la configuración
+
+### Frontend - Nuevas páginas
+- **Guiones** (/scripts): Lista de guiones con búsqueda y acciones rápidas
+- **Editor de Guiones** (/scripts/new, /scripts/:id): Crear/editar con pasos drag-and-drop
+- **Detalle de Campaña** (/campaigns/:id): Vista completa con tabs
+  - Tab Configuración: Editar nombre, objetivo, guión asociado, meta
+  - Tab Invitaciones: Enviar y listar invitaciones
+- **Cobertura**: Visualización de tasas de participación y completitud
 
 ## 🔄 FASES PENDIENTES
-
-### FASE 2 - Campañas y Guiones
-- [ ] Editor de guiones conversacionales
-- [ ] Versionamiento de scripts
-- [ ] Invitaciones y segmentos de participantes
-- [ ] Monitoreo de cobertura por segmento
 
 ### FASE 3 - Pipeline y RunaCultur
 - [ ] Pseudonimización/anonimización de transcripciones
