@@ -1,0 +1,187 @@
+{
+  "project_name": "DigiKawsay",
+  "design_philosophy": {
+    "identity": "E1 - The Anti-AI Designer",
+    "core_principles": [
+      "Fusion over Imitation: Mix Corporate Trust with Organic Human Connection",
+      "Emotion First: Trust, Clarity, and Insight",
+      "Content is King: Data tells a story",
+      "Zoom In: Focus on the nodes and connections",
+      "Negative Space: Let the data breathe"
+    ],
+    "anti_patterns": [
+      "Generic Bootstrap layouts",
+      "Flat, lifeless gradients",
+      "Center-aligned everything",
+      "Pure black (#000000) or pure white (#FFFFFF)"
+    ]
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Outfit, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "weights": {
+      "light": 300,
+      "regular": 400,
+      "medium": 500,
+      "bold": 700,
+      "black": 900
+    },
+    "usage_rules": {
+      "headings": "Use 'Outfit'. Tight tracking (-0.02em). Bold or Black weights for impact. Never Inter.",
+      "body": "Use 'Inter'. Relaxed line-height (1.6). Regular or Medium weights.",
+      "captions": "Uppercase, wide tracking (0.1em), small size (0.75rem)."
+    },
+    "import_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;700;900&display=swap"
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "DEFAULT": "#0F172A",
+        "foreground": "#F8FAFC",
+        "description": "Deep Navy (Slate 900) - Authority & Trust"
+      },
+      "secondary": {
+        "DEFAULT": "#F97316",
+        "foreground": "#FFFFFF",
+        "description": "Vibrant Orange (Orange 500) - Action & Highlights"
+      },
+      "accent": {
+        "DEFAULT": "#38BDF8",
+        "foreground": "#0F172A",
+        "description": "Sky Blue (Sky 400) - Tech & Clarity"
+      },
+      "background": {
+        "light": "#F8FAFC",
+        "dark": "#020617",
+        "description": "Slate 50 (Light) / Slate 950 (Dark)"
+      },
+      "surface": {
+        "light": "#FFFFFF",
+        "dark": "#0F172A",
+        "description": "Card backgrounds"
+      },
+      "muted": {
+        "DEFAULT": "#F1F5F9",
+        "foreground": "#64748B"
+      },
+      "border": "#E2E8F0"
+    },
+    "gradients": {
+      "hero": "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+      "accent": "bg-gradient-to-r from-orange-500 to-amber-500",
+      "glass": "bg-white/70 backdrop-blur-xl border border-white/20 shadow-sm"
+    },
+    "rules": [
+      "Never use pure black. Use Slate 950 (#020617).",
+      "Orange is for ACTIONS (Buttons, Links) and ALERTS only.",
+      "Blue is for STRUCTURE (Headers, Nav, Backgrounds).",
+      "Ensure WCAG AA contrast for all text."
+    ]
+  },
+  "layout_strategies": {
+    "spacing_system": {
+      "base": "0.25rem",
+      "scale": ["p-1", "p-2", "p-4", "p-6", "p-8", "p-12", "p-16", "p-24", "p-32"],
+      "rule": "Use 2x more padding than standard. Containers with borders MUST have p-6 or p-8."
+    },
+    "grids": {
+      "marketing": {
+        "name": "The Tetris Grid",
+        "classes": "grid grid-cols-1 md:grid-cols-12 gap-8",
+        "description": "Asymmetric layout for storytelling. Mix col-span-8 (Hero) with col-span-4 (Detail)."
+      },
+      "dashboard": {
+        "name": "The Control Room",
+        "classes": "grid grid-cols-1 md:grid-cols-4 gap-4",
+        "description": "Dense, data-heavy. Use col-span-2 row-span-2 for main charts."
+      }
+    },
+    "containers": {
+      "max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 rounded-md font-medium transition-all shadow-sm hover:shadow-md",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/90 h-10 px-6 py-2 rounded-md font-medium transition-all shadow-sm hover:shadow-md",
+      "outline": "border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 py-2 rounded-md font-medium transition-all"
+    },
+    "cards": {
+      "default": "bg-card text-card-foreground rounded-lg border shadow-sm p-6",
+      "interactive": "bg-card text-card-foreground rounded-lg border shadow-sm p-6 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer",
+      "glass": "bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/20 shadow-lg rounded-xl"
+    },
+    "inputs": {
+      "default": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "soft": "shadow-[0_4px_20px_-2px_rgba(0,0,0,0.1)]",
+      "glow": "shadow-[0_0_15px_rgba(56,189,248,0.3)]"
+    },
+    "borders": {
+      "subtle": "border border-slate-200 dark:border-slate-800",
+      "highlight": "border-l-4 border-orange-500"
+    },
+    "textures": {
+      "noise": "bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"
+    }
+  },
+  "assets": {
+    "images": {
+      "team_collaboration": {
+        "url": "https://images.pexels.com/photos/7616608/pexels-photo-7616608.jpeg",
+        "alt": "Diverse corporate team collaborating",
+        "usage": "About Us, Landing Page Hero"
+      },
+      "network_abstract": {
+        "url": "https://images.pexels.com/photos/17485657/pexels-photo-17485657.png",
+        "alt": "Abstract network nodes and connections",
+        "usage": "RunaMap Background, Tech Features"
+      },
+      "executive_portrait": {
+        "url": "https://images.pexels.com/photos/12437056/pexels-photo-12437056.jpeg",
+        "alt": "Friendly business executive",
+        "usage": "Testimonials, VAL Persona"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px, rounded joins"
+    }
+  },
+  "special_features": {
+    "val_chat": {
+      "style": "Hybrid Interface",
+      "layout": "Split screen: Chat on right (30%), Context/Data on left (70%)",
+      "bubble_user": "bg-slate-100 text-slate-900 rounded-2xl rounded-tr-sm",
+      "bubble_ai": "bg-blue-50 text-slate-800 border border-blue-100 rounded-2xl rounded-tl-sm shadow-sm"
+    },
+    "runa_map": {
+      "library": "react-force-graph-2d or similar",
+      "style": "Dark Mode Only for this component",
+      "nodes": "Orange for key influencers, Blue for standard nodes",
+      "links": "Slate-700 with 20% opacity"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Implement the 'Outfit' font for all headings immediately.",
+    "Set up the Tailwind config with the custom colors (Slate 900 Primary, Orange 500 Secondary).",
+    "Create a 'Layout' component that handles the Sidebar/Header structure.",
+    "Use the 'Control Room' grid for the main Dashboard.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Use 'sonner' for all toast notifications.",
+    "For the RunaMap, use a dark container even in light mode to make the graph pop."
+  ],
+  "universal_guidelines": [
+    "Avoid generic centered layouts.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Every interaction needs micro-animations.",
+    "Never use pure black or white.",
+    "Use glassmorphism for overlays."
+  ]
+}
