@@ -15,6 +15,8 @@ class DigiKawsayAPITester:
         self.campaigns = {}
         self.sessions = {}
         self.consents = {}
+        self.scripts = {}
+        self.invites = {}
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
