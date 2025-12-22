@@ -747,6 +747,74 @@ class DigiKawsayAPITester:
                 self.test_dashboard_stats(role)
                 break
         
+        # ============== PHASE 2 TESTS ==============
+        
+        # 10. Script Tests
+        print(f"\n📝 Testing Scripts (Phase 2)...")
+        script_created = False
+        script_id = None
+        
+        for role in ["admin", "facilitator"]:
+            if role in self.tokens:
+                # Create script
+                success, script_data = self.test_create_script(role)
+                if success:
+                    script_created = True
+                    script_id = script_data['id']
+                    
+                    # List scripts
+                    self.test_list_scripts(role)
+                    
+                    # Get script
+                    self.test_get_script(role, script_id)
+                    
+                    # Update script (creates version)
+                    self.test_update_script(role, script_id)
+                    
+                    # Get version history
+                    self.test_get_script_versions(role, script_id)
+                    
+                    # Duplicate script
+                    self.test_duplicate_script(role, script_id)
+                    
+                    break
+        
+        # 11. Campaign-Script Integration
+        print(f"\n🔗 Testing Campaign-Script Integration...")
+        if script_created and campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    self.test_update_campaign_with_script(role, campaign_id, script_id)
+                    break
+        
+        # 12. Invitation Tests
+        print(f"\n📧 Testing Invitations (Phase 2)...")
+        if campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Create individual invite
+                    self.test_create_invite(role, campaign_id)
+                    
+                    # Create bulk invites
+                    self.test_create_bulk_invites(role, campaign_id)
+                    
+                    # List campaign invites
+                    self.test_list_campaign_invites(role, campaign_id)
+                    
+                    break
+        
+        # 13. Campaign Coverage Analytics
+        print(f"\n📈 Testing Campaign Coverage...")
+        if campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    self.test_get_campaign_coverage(role, campaign_id)
+                    break
+        
         # Print Results
         print(f"\n" + "=" * 50)
         print(f"📊 TEST RESULTS")
