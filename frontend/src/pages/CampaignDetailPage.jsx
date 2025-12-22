@@ -34,7 +34,8 @@ import {
   FileText,
   Target,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Lightbulb
 } from 'lucide-react';
 
 export const CampaignDetailPage = () => {
@@ -177,6 +178,13 @@ export const CampaignDetailPage = () => {
         
         {isAdmin && (
           <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => navigate(`/insights/${campaignId}`)}
+            >
+              <Lightbulb className="w-4 h-4 mr-2" />
+              Ver Hallazgos
+            </Button>
             {currentCampaign.status === 'draft' && (
               <Button 
                 onClick={() => handleStatusChange('active')}
