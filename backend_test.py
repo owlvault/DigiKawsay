@@ -1198,6 +1198,113 @@ class DigiKawsayAPITester:
                     self.test_get_campaign_coverage(role, campaign_id)
                     break
         
+        # ============== PHASE 3 TESTS ==============
+        
+        # 14. Taxonomy Tests
+        print(f"\n🏷️  Testing Taxonomy (Phase 3)...")
+        taxonomy_created = False
+        category_id = None
+        
+        for role in ["admin", "facilitator"]:
+            if role in self.tokens:
+                # Create taxonomy category
+                success, category_data = self.test_create_taxonomy_category(role)
+                if success:
+                    taxonomy_created = True
+                    category_id = category_data['id']
+                    
+                    # List categories
+                    self.test_list_taxonomy_categories(role)
+                    
+                    # Update category
+                    self.test_update_taxonomy_category(role, category_id)
+                    
+                    # Note: We'll delete the category at the end
+                    break
+        
+        # 15. Insights Tests
+        print(f"\n💡 Testing Insights (Phase 3)...")
+        insight_created = False
+        insight_id = None
+        
+        if campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Create manual insight
+                    success, insight_data = self.test_create_manual_insight(role, campaign_id)
+                    if success:
+                        insight_created = True
+                        insight_id = insight_data['id']
+                        
+                        # List campaign insights
+                        self.test_list_campaign_insights(role, campaign_id)
+                        
+                        # Update insight
+                        self.test_update_insight(role, insight_id)
+                        
+                        # Validate insight
+                        self.test_validate_insight(role, insight_id)
+                        
+                        # Get insight stats
+                        self.test_get_insight_stats(role, campaign_id)
+                        
+                        # Try to extract insights (may not have transcripts)
+                        self.test_extract_insights(role, campaign_id)
+                        
+                        break
+        
+        # 16. Transcript Tests
+        print(f"\n📝 Testing Transcripts (Phase 3)...")
+        transcript_found = False
+        
+        if campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # List campaign transcripts
+                    success, transcripts = self.test_list_campaign_transcripts(role, campaign_id)
+                    if success and transcripts and len(transcripts) > 0:
+                        transcript_found = True
+                        transcript_id = transcripts[0]['id']
+                        
+                        # Get specific transcript
+                        self.test_get_transcript(role, transcript_id)
+                        
+                        # Pseudonymize transcript
+                        self.test_pseudonymize_transcript(role, transcript_id)
+                        
+                    break
+        
+        # 17. Validation Tests (Member-checking)
+        print(f"\n✅ Testing Validations (Phase 3)...")
+        if insight_created and "participant" in self.tokens:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and hasattr(self, 'insights') and role in self.insights:
+                    insight_id = self.insights[role]['id']
+                    
+                    # Create validation request
+                    validation_success, _ = self.test_create_validation_request(role, insight_id)
+                    
+                    # Get pending validations (as participant)
+                    self.test_get_pending_validations("participant")
+                    
+                    # Respond to validation (as participant)
+                    if validation_success and hasattr(self, 'validations') and role in self.validations:
+                        validation_id = self.validations[role]['id']
+                        self.test_respond_validation("participant", validation_id)
+                    
+                    break
+        
+        # 18. Cleanup - Delete taxonomy category
+        if taxonomy_created and category_id:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens:
+                    self.test_delete_taxonomy_category(role, category_id)
+                    break
+        
         # Print Results
         print(f"\n" + "=" * 50)
         print(f"📊 TEST RESULTS")
