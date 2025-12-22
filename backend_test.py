@@ -649,6 +649,387 @@ class DigiKawsayAPITester:
         )
         return success, response
 
+    # ============== PHASE 3 TESTS - TAXONOMY ==============
+    
+    def test_create_taxonomy_category(self, role="admin"):
+        """Test taxonomy category creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        timestamp = int(time.time())
+        category_data = {
+            "name": f"Test Category {timestamp}",
+            "type": "theme",
+            "description": "Test category for API testing",
+            "color": "#3B82F6"
+        }
+        
+        success, response = self.run_test(
+            f"Create Taxonomy Category ({role})",
+            "POST",
+            "taxonomy/",
+            200,
+            data=category_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            if 'taxonomy' not in self.__dict__:
+                self.taxonomy = {}
+            self.taxonomy[role] = response
+            return True, response
+        return False, {}
+
+    def test_list_taxonomy_categories(self, role="admin"):
+        """Test taxonomy category listing"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"List Taxonomy Categories ({role})",
+            "GET",
+            "taxonomy/",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_update_taxonomy_category(self, role="admin", category_id=None):
+        """Test taxonomy category update"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not category_id:
+            if hasattr(self, 'taxonomy') and role in self.taxonomy:
+                category_id = self.taxonomy[role]['id']
+            else:
+                return False, {}
+        
+        update_data = {
+            "name": f"Updated Test Category {int(time.time())}",
+            "type": "opportunity",
+            "description": "Updated description for testing",
+            "color": "#22C55E"
+        }
+        
+        success, response = self.run_test(
+            f"Update Taxonomy Category ({role})",
+            "PUT",
+            f"taxonomy/{category_id}",
+            200,
+            data=update_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_delete_taxonomy_category(self, role="admin", category_id=None):
+        """Test taxonomy category deletion"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not category_id:
+            if hasattr(self, 'taxonomy') and role in self.taxonomy:
+                category_id = self.taxonomy[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Delete Taxonomy Category ({role})",
+            "DELETE",
+            f"taxonomy/{category_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    # ============== PHASE 3 TESTS - INSIGHTS ==============
+    
+    def test_create_manual_insight(self, role="admin", campaign_id=None):
+        """Test manual insight creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        insight_data = {
+            "campaign_id": campaign_id,
+            "content": "Los empleados valoran mucho la flexibilidad horaria y el trabajo remoto",
+            "type": "theme",
+            "sentiment": "positive",
+            "importance": 8,
+            "source_quote": "Me encanta poder trabajar desde casa, es mucho más productivo"
+        }
+        
+        success, response = self.run_test(
+            f"Create Manual Insight ({role})",
+            "POST",
+            "insights/",
+            200,
+            data=insight_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            if 'insights' not in self.__dict__:
+                self.insights = {}
+            self.insights[role] = response
+            return True, response
+        return False, {}
+
+    def test_list_campaign_insights(self, role="admin", campaign_id=None):
+        """Test listing insights for a campaign"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"List Campaign Insights ({role})",
+            "GET",
+            f"insights/campaign/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_update_insight(self, role="admin", insight_id=None):
+        """Test insight update"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not insight_id:
+            if hasattr(self, 'insights') and role in self.insights:
+                insight_id = self.insights[role]['id']
+            else:
+                return False, {}
+        
+        update_data = {
+            "content": "Los empleados valoran la flexibilidad pero necesitan mejor comunicación",
+            "sentiment": "mixed",
+            "importance": 9
+        }
+        
+        success, response = self.run_test(
+            f"Update Insight ({role})",
+            "PUT",
+            f"insights/{insight_id}",
+            200,
+            data=update_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_validate_insight(self, role="admin", insight_id=None):
+        """Test insight validation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not insight_id:
+            if hasattr(self, 'insights') and role in self.insights:
+                insight_id = self.insights[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Validate Insight ({role})",
+            "PATCH",
+            f"insights/{insight_id}/validate?validated=true",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_get_insight_stats(self, role="admin", campaign_id=None):
+        """Test insight statistics endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Insight Stats ({role})",
+            "GET",
+            f"insights/campaign/{campaign_id}/stats",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_extract_insights(self, role="admin", campaign_id=None):
+        """Test AI insight extraction"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Extract Insights ({role})",
+            "POST",
+            f"insights/campaign/{campaign_id}/extract",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    # ============== PHASE 3 TESTS - TRANSCRIPTS ==============
+    
+    def test_list_campaign_transcripts(self, role="admin", campaign_id=None):
+        """Test listing transcripts for a campaign"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"List Campaign Transcripts ({role})",
+            "GET",
+            f"transcripts/campaign/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        # Store transcript ID for pseudonymization test
+        if success and response and len(response) > 0:
+            if 'transcripts' not in self.__dict__:
+                self.transcripts = {}
+            self.transcripts[role] = response[0]
+        
+        return success, response
+
+    def test_get_transcript(self, role="admin", transcript_id=None):
+        """Test getting a specific transcript"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not transcript_id:
+            if hasattr(self, 'transcripts') and role in self.transcripts:
+                transcript_id = self.transcripts[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Transcript ({role})",
+            "GET",
+            f"transcripts/{transcript_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_pseudonymize_transcript(self, role="admin", transcript_id=None):
+        """Test transcript pseudonymization"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not transcript_id:
+            if hasattr(self, 'transcripts') and role in self.transcripts:
+                transcript_id = self.transcripts[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Pseudonymize Transcript ({role})",
+            "POST",
+            f"transcripts/{transcript_id}/pseudonymize",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    # ============== PHASE 3 TESTS - VALIDATIONS ==============
+    
+    def test_create_validation_request(self, role="admin", insight_id=None):
+        """Test creating validation request (member-checking)"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not insight_id:
+            if hasattr(self, 'insights') and role in self.insights:
+                insight_id = self.insights[role]['id']
+            else:
+                return False, {}
+        
+        validation_data = {
+            "insight_id": insight_id,
+            "message": "Por favor valida este hallazgo basado en tu experiencia"
+        }
+        
+        success, response = self.run_test(
+            f"Create Validation Request ({role})",
+            "POST",
+            "validations/",
+            200,
+            data=validation_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            if 'validations' not in self.__dict__:
+                self.validations = {}
+            self.validations[role] = response
+            return True, response
+        return False, {}
+
+    def test_get_pending_validations(self, role="participant"):
+        """Test getting pending validations for a user"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"Get Pending Validations ({role})",
+            "GET",
+            "validations/pending",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_respond_validation(self, role="participant", validation_id=None):
+        """Test responding to a validation request"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not validation_id:
+            if hasattr(self, 'validations') and 'admin' in self.validations:
+                validation_id = self.validations['admin']['id']
+            else:
+                return False, {}
+        
+        response_data = {
+            "validated": True,
+            "comment": "Sí, este hallazgo refleja mi experiencia en la organización"
+        }
+        
+        success, response = self.run_test(
+            f"Respond Validation ({role})",
+            "POST",
+            f"validations/{validation_id}/respond",
+            200,
+            data=response_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
     def run_full_test_suite(self):
         """Run complete test suite"""
         print("🚀 Starting DigiKawsay API Test Suite")
