@@ -347,6 +347,306 @@ class DigiKawsayAPITester:
         )
         return success, response
 
+    # ============== PHASE 2 TESTS - SCRIPTS ==============
+    
+    def test_create_script(self, role="admin"):
+        """Test script creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        timestamp = int(time.time())
+        script_data = {
+            "name": f"Test Script {timestamp}",
+            "description": "Test script for API testing",
+            "objective": "Explorar experiencias organizacionales mediante preguntas estructuradas",
+            "welcome_message": "¡Hola! Gracias por participar en esta conversación.",
+            "closing_message": "Gracias por compartir tu experiencia.",
+            "estimated_duration_minutes": 20,
+            "steps": [
+                {
+                    "order": 1,
+                    "question": "¿Cómo describirías el ambiente de trabajo en tu equipo?",
+                    "description": "Pregunta sobre clima organizacional",
+                    "type": "open",
+                    "is_required": True,
+                    "follow_up_prompt": "Si menciona conflictos, profundizar en las causas"
+                },
+                {
+                    "order": 2,
+                    "question": "En una escala del 1 al 10, ¿qué tan satisfecho estás con tu trabajo?",
+                    "type": "scale",
+                    "is_required": True
+                }
+            ]
+        }
+        
+        success, response = self.run_test(
+            f"Create Script ({role})",
+            "POST",
+            "scripts/",
+            200,
+            data=script_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            self.scripts[role] = response
+            return True, response
+        return False, {}
+
+    def test_list_scripts(self, role="admin"):
+        """Test script listing"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"List Scripts ({role})",
+            "GET",
+            "scripts/",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_get_script(self, role="admin", script_id=None):
+        """Test get script by ID"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not script_id:
+            if role in self.scripts:
+                script_id = self.scripts[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Script ({role})",
+            "GET",
+            f"scripts/{script_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_update_script(self, role="admin", script_id=None):
+        """Test script update (creates new version)"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not script_id:
+            if role in self.scripts:
+                script_id = self.scripts[role]['id']
+            else:
+                return False, {}
+        
+        update_data = {
+            "name": f"Updated Test Script {int(time.time())}",
+            "objective": "Objetivo actualizado para testing de versiones",
+            "steps": [
+                {
+                    "order": 1,
+                    "question": "¿Cómo ha cambiado tu percepción del trabajo remoto?",
+                    "type": "open",
+                    "is_required": True
+                }
+            ]
+        }
+        
+        success, response = self.run_test(
+            f"Update Script ({role})",
+            "PUT",
+            f"scripts/{script_id}",
+            200,
+            data=update_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_get_script_versions(self, role="admin", script_id=None):
+        """Test get script version history"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not script_id:
+            if role in self.scripts:
+                script_id = self.scripts[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Script Versions ({role})",
+            "GET",
+            f"scripts/{script_id}/versions",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_duplicate_script(self, role="admin", script_id=None):
+        """Test script duplication"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not script_id:
+            if role in self.scripts:
+                script_id = self.scripts[role]['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Duplicate Script ({role})",
+            "POST",
+            f"scripts/{script_id}/duplicate",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    # ============== PHASE 2 TESTS - INVITATIONS ==============
+    
+    def test_create_invite(self, role="admin", campaign_id=None):
+        """Test individual invitation creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        timestamp = int(time.time())
+        invite_data = {
+            "campaign_id": campaign_id,
+            "email": f"invite_test_{timestamp}@test.com",
+            "message": "Te invitamos a participar en esta campaña de diálogo organizacional"
+        }
+        
+        success, response = self.run_test(
+            f"Create Individual Invite ({role})",
+            "POST",
+            "invites/",
+            200,
+            data=invite_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            self.invites[f"{role}_individual"] = response
+            return True, response
+        return False, {}
+
+    def test_create_bulk_invites(self, role="admin", campaign_id=None):
+        """Test bulk invitation creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        timestamp = int(time.time())
+        bulk_invite_data = {
+            "campaign_id": campaign_id,
+            "emails": [
+                f"bulk_test1_{timestamp}@test.com",
+                f"bulk_test2_{timestamp}@test.com",
+                f"bulk_test3_{timestamp}@test.com"
+            ],
+            "user_ids": [],
+            "message": "Invitación masiva para campaña de testing"
+        }
+        
+        success, response = self.run_test(
+            f"Create Bulk Invites ({role})",
+            "POST",
+            "invites/bulk",
+            200,
+            data=bulk_invite_data,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            self.invites[f"{role}_bulk"] = response
+            return True, response
+        return False, {}
+
+    def test_list_campaign_invites(self, role="admin", campaign_id=None):
+        """Test listing invitations for a campaign"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"List Campaign Invites ({role})",
+            "GET",
+            f"invites/campaign/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    # ============== PHASE 2 TESTS - CAMPAIGN UPDATES ==============
+    
+    def test_update_campaign_with_script(self, role="admin", campaign_id=None, script_id=None):
+        """Test updating campaign to assign a script"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+                
+        if not script_id:
+            if role in self.scripts:
+                script_id = self.scripts[role]['id']
+            else:
+                return False, {}
+        
+        update_data = {
+            "script_id": script_id,
+            "description": "Campaña actualizada con guión asignado"
+        }
+        
+        success, response = self.run_test(
+            f"Update Campaign with Script ({role})",
+            "PUT",
+            f"campaigns/{campaign_id}",
+            200,
+            data=update_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_get_campaign_coverage(self, role="admin", campaign_id=None):
+        """Test campaign coverage analytics"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Campaign Coverage ({role})",
+            "GET",
+            f"campaigns/{campaign_id}/coverage",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
     def run_full_test_suite(self):
         """Run complete test suite"""
         print("🚀 Starting DigiKawsay API Test Suite")
