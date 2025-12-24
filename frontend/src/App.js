@@ -24,6 +24,10 @@ import { ReidentificationPage } from "./pages/ReidentificationPage";
 // Phase 4 - RunaMap
 import { RunaMapPage } from "./pages/RunaMapPage";
 
+// Phase 5 - RunaFlow
+import { RunaFlowPage } from "./pages/RunaFlowPage";
+import { RitualsPage } from "./pages/RitualsPage";
+
 // Components
 import { Layout } from "./components/Layout";
 
