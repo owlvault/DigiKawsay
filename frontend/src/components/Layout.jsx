@@ -71,8 +71,10 @@ export const Layout = ({ children }) => {
     { to: '/reidentification', icon: Lock, label: 'Reidentificación', roles: ['admin', 'data_steward', 'security_officer'] },
     // Phase 4 - RunaMap
     { to: '/network', icon: Network, label: 'RunaMap', roles: ['admin', 'facilitator', 'analyst'] },
+    // Phase 5 - RunaFlow
+    { to: '/roadmap', icon: Route, label: 'RunaFlow', roles: ['admin', 'facilitator', 'analyst', 'sponsor'] },
+    { to: '/rituals', icon: Calendar, label: 'Rituales', roles: ['admin', 'facilitator'] },
     // Future phases
-    { to: '/roadmap', icon: Route, label: 'Roadmap', roles: ['admin', 'facilitator', 'sponsor'], disabled: true },
     { to: '/governance', icon: Shield, label: 'Gobernanza', roles: ['admin'], disabled: true },
   ];
 
