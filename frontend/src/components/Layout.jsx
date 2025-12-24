@@ -25,7 +25,10 @@ import {
   Sparkles,
   User,
   Bell,
-  FileText
+  FileText,
+  Eye,
+  ClipboardList,
+  Lock
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
