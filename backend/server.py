@@ -61,6 +61,7 @@ transcript_router = APIRouter(prefix="/transcripts", tags=["Transcripts"])
 audit_router = APIRouter(prefix="/audit", tags=["Audit"])
 privacy_router = APIRouter(prefix="/privacy", tags=["Privacy"])
 reidentification_router = APIRouter(prefix="/reidentification", tags=["Reidentification"])
+network_router = APIRouter(prefix="/network", tags=["RunaMap - Network Analysis"])
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
