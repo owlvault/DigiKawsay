@@ -1219,7 +1219,7 @@ class DigiKawsayAPITester:
         )
         
         if success:
-            brokers = response.get('brokers', [])
+            brokers = response if isinstance(response, list) else []
             self.log_test("Network Brokers API", True, f"Retrieved {len(brokers)} brokers")
         else:
             self.log_test("Network Brokers API", False, error="Failed to get network brokers")
