@@ -1,9 +1,9 @@
-# Testing Data for Phase 4: RunaMap
+# Testing Data for Phase 5: RunaFlow
 
-user_problem_statement: "DigiKawsay - Phase 4: RunaMap - Análisis de Redes Sociales con visualización interactiva"
+user_problem_statement: "DigiKawsay - Phase 5: RunaFlow - Gestión de Iniciativas y Rituales Organizacionales"
 
 backend:
-  - task: "Network Generation API"
+  - task: "Initiatives CRUD API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -13,9 +13,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST /api/network/generate and GET /api/network/campaign/{id} endpoints working"
+        comment: "POST/GET/PUT/DELETE /api/initiatives/ endpoints working - tested with curl"
 
-  - task: "Network Metrics API"
+  - task: "Initiative Scoring (ICE/RICE)"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -25,9 +25,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/network/metrics/{campaign_id} returns metrics - tested with curl"
+        comment: "ICE and RICE scoring calculations working - final_score calculated on create/update"
 
-  - task: "Brokers & Communities API"
+  - task: "Rituals CRUD API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -37,9 +37,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/network/brokers and /communities endpoints implemented"
+        comment: "POST/GET/PUT/DELETE /api/rituals/ endpoints implemented"
 
-  - task: "Network Snapshots API"
+  - task: "Initiative Stats API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -49,20 +49,32 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Snapshot save, list, get, delete endpoints implemented"
+        comment: "GET /api/initiatives/stats/{campaign_id} returns stats with top_contributors"
 
 frontend:
-  - task: "RunaMap Page"
+  - task: "RunaFlow Page"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/RunaMapPage.jsx"
+    file: "/app/frontend/src/pages/RunaFlowPage.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Page loads with React Flow visualization, D3-force layout, metrics panel"
+        comment: "Page loads with Kanban view, stats, create/edit dialog. SelectItem fix applied."
+
+  - task: "Rituals Page"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/RitualsPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Page loads with ritual cards, create/edit dialog. SelectItem fix applied."
 
   - task: "Navigation and Routes"
     implemented: true
@@ -74,19 +86,19 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Route /network added, navigation link enabled in Layout.jsx"
+        comment: "Routes /roadmap and /rituals added. Navigation links enabled in Layout.jsx"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 6
   run_ui: true
 
 test_plan:
   current_focus:
-    - "RunaMap Page - verify page loads and controls work"
-    - "Network APIs - verify all endpoints respond correctly"
-    - "Graph visualization with React Flow"
+    - "RunaFlow Page - verify Kanban view, create initiative, scoring"
+    - "Rituals Page - verify create ritual dialog and list"
+    - "Backend APIs - verify all Phase 5 endpoints"
   stuck_tasks: []
   test_all: true
 
