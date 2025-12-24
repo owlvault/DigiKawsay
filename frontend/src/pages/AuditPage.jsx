@@ -142,7 +142,7 @@ export const AuditPage = () => {
                 <SelectValue placeholder="Filtrar por acción" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas las acciones</SelectItem>
+                <SelectItem value="all">Todas las acciones</SelectItem>
                 {Object.entries(ACTION_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>{config.label}</SelectItem>
                 ))}
@@ -153,7 +153,7 @@ export const AuditPage = () => {
                 <SelectValue placeholder="Tipo de recurso" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos los recursos</SelectItem>
+                <SelectItem value="all">Todos los recursos</SelectItem>
                 <SelectItem value="transcript">Transcripción</SelectItem>
                 <SelectItem value="insight">Insight</SelectItem>
                 <SelectItem value="consent">Consentimiento</SelectItem>
