@@ -1158,6 +1158,128 @@ class DigiKawsayAPITester:
         )
         return success, response
 
+    # ============== PHASE 4 TESTS - RUNAMAP NETWORK ANALYSIS ==============
+    
+    def test_runamap_network_apis(self, role="admin", campaign_id=None):
+        """Test RunaMap Network Analysis APIs (Phase 4)"""
+        if role not in self.tokens:
+            self.log_test(f"RunaMap APIs - No {role} Token", False, error=f"{role} not logged in")
+            return False
+
+        if not campaign_id:
+            if role in self.campaigns:
+                campaign_id = self.campaigns[role]['id']
+            else:
+                self.log_test("RunaMap APIs - No Campaign", False, error="No campaign available for testing")
+                return False
+
+        print(f"   Testing with campaign: {campaign_id}")
+
+        # Test 1: GET /api/network/campaign/{id}
+        success, response = self.run_test(
+            f"Network Campaign Data ({role})",
+            "GET",
+            f"network/campaign/{campaign_id}?include_participant_theme=true&include_theme_cooccurrence=true&include_participant_similarity=true&min_edge_weight=1.0",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            nodes_count = len(response.get('nodes', []))
+            edges_count = len(response.get('edges', []))
+            self.log_test("Network Campaign API", True, f"Retrieved network data with {nodes_count} nodes, {edges_count} edges")
+        else:
+            self.log_test("Network Campaign API", False, error="Failed to get network campaign data")
+
+        # Test 2: GET /api/network/metrics/{id}
+        success, response = self.run_test(
+            f"Network Metrics ({role})",
+            "GET",
+            f"network/metrics/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            metrics = response
+            total_nodes = metrics.get('total_nodes', 0)
+            total_edges = metrics.get('total_edges', 0)
+            num_communities = metrics.get('num_communities', 0)
+            self.log_test("Network Metrics API", True, f"Retrieved metrics: {total_nodes} nodes, {total_edges} edges, {num_communities} communities")
+        else:
+            self.log_test("Network Metrics API", False, error="Failed to get network metrics")
+
+        # Test 3: GET /api/network/brokers/{id}
+        success, response = self.run_test(
+            f"Network Brokers ({role})",
+            "GET",
+            f"network/brokers/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            brokers = response.get('brokers', [])
+            self.log_test("Network Brokers API", True, f"Retrieved {len(brokers)} brokers")
+        else:
+            self.log_test("Network Brokers API", False, error="Failed to get network brokers")
+
+        # Test 4: GET /api/network/communities/{id}
+        success, response = self.run_test(
+            f"Network Communities ({role})",
+            "GET",
+            f"network/communities/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            communities = response.get('communities', [])
+            self.log_test("Network Communities API", True, f"Retrieved {len(communities)} communities")
+        else:
+            self.log_test("Network Communities API", False, error="Failed to get network communities")
+
+        # Test 5: GET /api/network/snapshots/{id}
+        success, response = self.run_test(
+            f"Network Snapshots ({role})",
+            "GET",
+            f"network/snapshots/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            snapshots = response
+            snapshot_count = len(snapshots) if isinstance(snapshots, list) else "snapshot data"
+            self.log_test("Network Snapshots API", True, f"Retrieved {snapshot_count}")
+        else:
+            self.log_test("Network Snapshots API", False, error="Failed to get network snapshots")
+
+        # Test 6: POST /api/network/generate
+        success, response = self.run_test(
+            f"Generate Network ({role})",
+            "POST",
+            "network/generate",
+            200,
+            data={
+                "campaign_id": campaign_id,
+                "include_participant_theme": True,
+                "include_theme_cooccurrence": True,
+                "include_participant_similarity": True,
+                "min_edge_weight": 1.0,
+                "snapshot_name": f"Test Snapshot {datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            },
+            token=self.tokens[role]
+        )
+        
+        if success:
+            snapshot_id = response.get('snapshot_id', 'unknown')
+            self.log_test("Generate Network API", True, f"Generated network snapshot: {snapshot_id}")
+        else:
+            self.log_test("Generate Network API", False, error="Failed to generate network")
+
+        return True
+
     def test_consent_policy_for_campaign(self, role="participant", campaign_id=None):
         """Test getting consent policy for campaign"""
         if role not in self.tokens:
