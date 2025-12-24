@@ -1487,6 +1487,61 @@ class DigiKawsayAPITester:
                     self.test_delete_taxonomy_category(role, category_id)
                     break
         
+        # ============== PHASE 3.5 TESTS - COMPLIANCE ==============
+        
+        # 19. Audit Tests
+        print(f"\n🔍 Testing Audit (Phase 3.5)...")
+        for role in ["admin"]:
+            if role in self.tokens:
+                # Test audit logs
+                self.test_audit_logs(role)
+                
+                # Test audit summary
+                self.test_audit_summary(role)
+                
+                # Test audit actions
+                self.test_audit_actions(role)
+                break
+        
+        # 20. Privacy Tests
+        print(f"\n🔒 Testing Privacy (Phase 3.5)...")
+        if campaign_created:
+            for role in ["admin", "facilitator"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Test suppression status
+                    self.test_privacy_suppression_status(role, campaign_id)
+                    
+                    # Test suppression trigger
+                    self.test_privacy_suppress_campaign(role, campaign_id)
+                    break
+        
+        # 21. Reidentification Tests
+        print(f"\n🔓 Testing Reidentification (Phase 3.5)...")
+        for role in ["admin"]:
+            if role in self.tokens:
+                # Test create reidentification request
+                self.test_create_reidentification_request(role)
+                
+                # Test get pending requests
+                self.test_get_pending_reidentification_requests(role)
+                break
+        
+        # 22. Consent Policy Tests
+        print(f"\n📋 Testing Consent Policies (Phase 3.5)...")
+        if campaign_created:
+            for role in ["admin"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Test create consent policy
+                    self.test_create_consent_policy(role, campaign_id)
+                    
+                    # Test get consent policy for campaign
+                    self.test_consent_policy_for_campaign("participant", campaign_id)
+                    break
+        
         # Print Results
         print(f"\n" + "=" * 50)
         print(f"📊 TEST RESULTS")
