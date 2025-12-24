@@ -64,6 +64,11 @@ export const Layout = ({ children }) => {
     { to: '/campaigns', icon: MessageCircle, label: 'Campañas', roles: ['all'] },
     { to: '/scripts', icon: FileText, label: 'Guiones', roles: ['admin', 'facilitator'] },
     { to: '/taxonomy', icon: BarChart3, label: 'Taxonomía', roles: ['admin', 'facilitator', 'analyst'] },
+    // Phase 3.5 - Compliance
+    { to: '/audit', icon: ClipboardList, label: 'Auditoría', roles: ['admin', 'security_officer'] },
+    { to: '/privacy', icon: Eye, label: 'Privacidad', roles: ['admin', 'facilitator'] },
+    { to: '/reidentification', icon: Lock, label: 'Reidentificación', roles: ['admin', 'data_steward', 'security_officer'] },
+    // Future phases
     { to: '/network', icon: Network, label: 'Red Social', roles: ['admin', 'facilitator', 'analyst'], disabled: true },
     { to: '/roadmap', icon: Route, label: 'Roadmap', roles: ['admin', 'facilitator', 'sponsor'], disabled: true },
     { to: '/governance', icon: Shield, label: 'Gobernanza', roles: ['admin'], disabled: true },
