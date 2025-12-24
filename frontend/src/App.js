@@ -21,6 +21,9 @@ import { AuditPage } from "./pages/AuditPage";
 import { PrivacyDashboard } from "./pages/PrivacyDashboard";
 import { ReidentificationPage } from "./pages/ReidentificationPage";
 
+// Phase 4 - RunaMap
+import { RunaMapPage } from "./pages/RunaMapPage";
+
 // Components
 import { Layout } from "./components/Layout";
 
