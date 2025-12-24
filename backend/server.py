@@ -8,7 +8,7 @@ import logging
 import re
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import uuid
 from datetime import datetime, timezone, timedelta
 from jose import JWTError, jwt
@@ -17,6 +17,9 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 import asyncio
 import hashlib
 from functools import wraps
+from collections import defaultdict
+import networkx as nx
+from community import community_louvain
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
