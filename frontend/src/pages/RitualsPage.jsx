@@ -151,14 +151,14 @@ const RitualDialog = ({ open, onOpenChange, ritual, campaigns, users, onSave }) 
             <div>
               <Label>Campaña (opcional)</Label>
               <Select
-                value={formData.campaign_id}
-                onValueChange={v => setFormData({ ...formData, campaign_id: v })}
+                value={formData.campaign_id || 'none'}
+                onValueChange={v => setFormData({ ...formData, campaign_id: v === 'none' ? '' : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Global" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Global (todas las campañas)</SelectItem>
+                  <SelectItem value="none">Global (todas las campañas)</SelectItem>
                   {campaigns.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                   ))}
