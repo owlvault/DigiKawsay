@@ -1279,6 +1279,252 @@ class DigiKawsayAPITester:
             self.log_test("Generate Network API", False, error="Failed to generate network")
 
         return True
+    # ============== PHASE 5 TESTS - RUNAFLOW INITIATIVES ==============
+    
+    def test_runaflow_initiative_apis(self, role="admin", campaign_id=None):
+        """Test RunaFlow Initiative APIs (Phase 5)"""
+        if role not in self.tokens:
+            self.log_test(f"RunaFlow Initiative APIs - No {role} Token", False, error=f"{role} not logged in")
+            return False
+
+        if not campaign_id:
+            if role in self.campaigns:
+                campaign_id = self.campaigns[role]['id']
+            else:
+                self.log_test("RunaFlow Initiative APIs - No Campaign", False, error="No campaign available for testing")
+                return False
+
+        print(f"   Testing with campaign: {campaign_id}")
+
+        # Test 1: POST /api/initiatives/ - Create Initiative
+        initiative_data = {
+            "title": f"Test Initiative {datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "description": "Test initiative for API testing",
+            "campaign_id": campaign_id,
+            "scoring_method": "ice",
+            "impact_score": 8,
+            "confidence_score": 7,
+            "ease_score": 6,
+            "tags": ["test", "api", "automation"]
+        }
+        
+        success, response = self.run_test(
+            f"Create Initiative ({role})",
+            "POST",
+            "initiatives/",
+            200,
+            data=initiative_data,
+            token=self.tokens[role]
+        )
+        
+        initiative_id = None
+        if success and 'id' in response:
+            initiative_id = response['id']
+            final_score = response.get('final_score', 0)
+            self.log_test("Create Initiative API", True, f"Created initiative with ID: {initiative_id}, Score: {final_score}")
+            
+            # Store for other tests
+            if 'initiatives' not in self.__dict__:
+                self.initiatives = {}
+            self.initiatives[role] = response
+        else:
+            self.log_test("Create Initiative API", False, error="Failed to create initiative")
+
+        # Test 2: GET /api/initiatives/campaign/{id} - List Campaign Initiatives
+        success, response = self.run_test(
+            f"List Campaign Initiatives ({role})",
+            "GET",
+            f"initiatives/campaign/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            initiatives_count = len(response) if isinstance(response, list) else 0
+            self.log_test("List Campaign Initiatives API", True, f"Retrieved {initiatives_count} initiatives")
+        else:
+            self.log_test("List Campaign Initiatives API", False, error="Failed to list campaign initiatives")
+
+        # Test 3: GET /api/initiatives/stats/{campaign_id} - Initiative Stats
+        success, response = self.run_test(
+            f"Initiative Stats ({role})",
+            "GET",
+            f"initiatives/stats/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            total = response.get('total', 0)
+            avg_score = response.get('avg_score', 0)
+            completion_rate = response.get('completion_rate', 0)
+            self.log_test("Initiative Stats API", True, f"Stats: {total} total, avg score: {avg_score:.1f}, completion: {completion_rate:.1f}%")
+        else:
+            self.log_test("Initiative Stats API", False, error="Failed to get initiative stats")
+
+        # Test 4: PUT /api/initiatives/{id} - Update Initiative (if we created one)
+        if initiative_id:
+            update_data = {
+                "title": f"Updated Test Initiative {datetime.now().strftime('%H%M%S')}",
+                "status": "en_evaluacion",
+                "scoring_method": "rice",
+                "reach_score": 150,
+                "impact_score": 9,
+                "confidence_score": 8,
+                "effort_score": 4
+            }
+            
+            success, response = self.run_test(
+                f"Update Initiative ({role})",
+                "PUT",
+                f"initiatives/{initiative_id}",
+                200,
+                data=update_data,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                new_score = response.get('final_score', 0)
+                new_status = response.get('status', 'unknown')
+                self.log_test("Update Initiative API", True, f"Updated initiative - Status: {new_status}, New Score: {new_score}")
+            else:
+                self.log_test("Update Initiative API", False, error="Failed to update initiative")
+
+        # Test 5: GET /api/initiatives/{id} - Get Single Initiative
+        if initiative_id:
+            success, response = self.run_test(
+                f"Get Initiative ({role})",
+                "GET",
+                f"initiatives/{initiative_id}",
+                200,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                title = response.get('title', 'Unknown')
+                status = response.get('status', 'Unknown')
+                self.log_test("Get Initiative API", True, f"Retrieved initiative: {title} ({status})")
+            else:
+                self.log_test("Get Initiative API", False, error="Failed to get initiative")
+
+        return True
+
+    def test_runaflow_ritual_apis(self, role="admin"):
+        """Test RunaFlow Ritual APIs (Phase 5)"""
+        if role not in self.tokens:
+            self.log_test(f"RunaFlow Ritual APIs - No {role} Token", False, error=f"{role} not logged in")
+            return False
+
+        # Test 1: POST /api/rituals/ - Create Ritual
+        ritual_data = {
+            "name": f"Test Ritual {datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "description": "Test ritual for API testing",
+            "ritual_type": "weekly",
+            "day_of_week": 1,  # Tuesday
+            "time_of_day": "10:00",
+            "duration_minutes": 45,
+            "agenda_template": "1. Check-in\n2. Progress review\n3. Blockers\n4. Next steps",
+            "is_active": True
+        }
+        
+        success, response = self.run_test(
+            f"Create Ritual ({role})",
+            "POST",
+            "rituals/",
+            200,
+            data=ritual_data,
+            token=self.tokens[role]
+        )
+        
+        ritual_id = None
+        if success and 'id' in response:
+            ritual_id = response['id']
+            ritual_type = response.get('ritual_type', 'unknown')
+            self.log_test("Create Ritual API", True, f"Created {ritual_type} ritual with ID: {ritual_id}")
+            
+            # Store for other tests
+            if 'rituals' not in self.__dict__:
+                self.rituals = {}
+            self.rituals[role] = response
+        else:
+            self.log_test("Create Ritual API", False, error="Failed to create ritual")
+
+        # Test 2: GET /api/rituals/ - List All Rituals
+        success, response = self.run_test(
+            f"List Rituals ({role})",
+            "GET",
+            "rituals/",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            rituals_count = len(response) if isinstance(response, list) else 0
+            self.log_test("List Rituals API", True, f"Retrieved {rituals_count} rituals")
+        else:
+            self.log_test("List Rituals API", False, error="Failed to list rituals")
+
+        # Test 3: PUT /api/rituals/{id} - Update Ritual (if we created one)
+        if ritual_id:
+            update_data = {
+                "name": f"Updated Test Ritual {datetime.now().strftime('%H%M%S')}",
+                "ritual_type": "monthly",
+                "day_of_month": 15,
+                "time_of_day": "14:00",
+                "duration_minutes": 60,
+                "is_active": True
+            }
+            
+            success, response = self.run_test(
+                f"Update Ritual ({role})",
+                "PUT",
+                f"rituals/{ritual_id}",
+                200,
+                data=update_data,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                new_type = response.get('ritual_type', 'unknown')
+                new_duration = response.get('duration_minutes', 0)
+                self.log_test("Update Ritual API", True, f"Updated ritual - Type: {new_type}, Duration: {new_duration}min")
+            else:
+                self.log_test("Update Ritual API", False, error="Failed to update ritual")
+
+        # Test 4: GET /api/rituals/{id} - Get Single Ritual
+        if ritual_id:
+            success, response = self.run_test(
+                f"Get Ritual ({role})",
+                "GET",
+                f"rituals/{ritual_id}",
+                200,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                name = response.get('name', 'Unknown')
+                ritual_type = response.get('ritual_type', 'Unknown')
+                is_active = response.get('is_active', False)
+                self.log_test("Get Ritual API", True, f"Retrieved ritual: {name} ({ritual_type}) - Active: {is_active}")
+            else:
+                self.log_test("Get Ritual API", False, error="Failed to get ritual")
+
+        # Test 5: DELETE /api/rituals/{id} - Delete Ritual (cleanup)
+        if ritual_id:
+            success, response = self.run_test(
+                f"Delete Ritual ({role})",
+                "DELETE",
+                f"rituals/{ritual_id}",
+                200,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                self.log_test("Delete Ritual API", True, f"Successfully deleted ritual: {ritual_id}")
+            else:
+                self.log_test("Delete Ritual API", False, error="Failed to delete ritual")
+
+        return True
 
     def test_consent_policy_for_campaign(self, role="participant", campaign_id=None):
         """Test getting consent policy for campaign"""
