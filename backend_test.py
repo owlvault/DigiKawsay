@@ -1032,6 +1032,186 @@ class DigiKawsayAPITester:
         )
         return success, response
 
+    # ============== PHASE 3.5 TESTS - COMPLIANCE ==============
+    
+    def test_audit_logs(self, role="admin"):
+        """Test audit logs endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"Get Audit Logs ({role})",
+            "GET",
+            "audit/",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_audit_summary(self, role="admin"):
+        """Test audit summary endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"Get Audit Summary ({role})",
+            "GET",
+            "audit/summary?days=30",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_audit_actions(self, role="admin"):
+        """Test audit actions list endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"Get Audit Actions ({role})",
+            "GET",
+            "audit/actions",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_privacy_suppression_status(self, role="admin", campaign_id=None):
+        """Test privacy suppression status endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Privacy Suppression Status ({role})",
+            "GET",
+            f"privacy/suppression-status/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_privacy_suppress_campaign(self, role="admin", campaign_id=None):
+        """Test privacy suppression trigger endpoint"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Trigger Privacy Suppression ({role})",
+            "POST",
+            f"privacy/suppress/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_create_reidentification_request(self, role="admin"):
+        """Test reidentification request creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        # Use a test pseudonym ID
+        request_data = {
+            "pseudonym_id": "P-TEST1234",
+            "reason_code": "safety_concern",
+            "justification": "Test reidentification request for API testing purposes"
+        }
+        
+        success, response = self.run_test(
+            f"Create Reidentification Request ({role})",
+            "POST",
+            "reidentification/request",
+            200,
+            data=request_data,
+            token=self.tokens[role]
+        )
+        
+        if success and 'id' in response:
+            if 'reidentification' not in self.__dict__:
+                self.reidentification = {}
+            self.reidentification[role] = response
+            return True, response
+        return False, {}
+
+    def test_get_pending_reidentification_requests(self, role="admin"):
+        """Test getting pending reidentification requests"""
+        if role not in self.tokens:
+            return False, {}
+            
+        success, response = self.run_test(
+            f"Get Pending Reidentification Requests ({role})",
+            "GET",
+            "reidentification/pending",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_consent_policy_for_campaign(self, role="participant", campaign_id=None):
+        """Test getting consent policy for campaign"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        success, response = self.run_test(
+            f"Get Consent Policy for Campaign ({role})",
+            "GET",
+            f"consents/policy/{campaign_id}",
+            200,
+            token=self.tokens[role]
+        )
+        return success, response
+
+    def test_create_consent_policy(self, role="admin", campaign_id=None):
+        """Test consent policy creation"""
+        if role not in self.tokens:
+            return False, {}
+            
+        if not campaign_id:
+            if 'admin' in self.campaigns:
+                campaign_id = self.campaigns['admin']['id']
+            else:
+                return False, {}
+        
+        policy_data = {
+            "campaign_id": campaign_id,
+            "purpose": "Diagnóstico organizacional para testing",
+            "data_collected": ["transcript", "metadata", "insights"],
+            "data_not_used_for": ["individual_surveillance", "punitive_actions"],
+            "deliverables": ["aggregated_insights", "anonymized_reports"],
+            "risks_mitigations": "Datos pseudonimizados y supresión de grupos pequeños",
+            "user_rights": ["access", "rectification", "deletion", "revocation"],
+            "retention_days": 365,
+            "contact_email": "privacy@test.com",
+            "version": "1.0"
+        }
+        
+        success, response = self.run_test(
+            f"Create Consent Policy ({role})",
+            "POST",
+            "consents/policy",
+            200,
+            data=policy_data,
+            token=self.tokens[role]
+        )
+        return success, response
+
     def run_full_test_suite(self):
         """Run complete test suite"""
         print("🚀 Starting DigiKawsay API Test Suite")
