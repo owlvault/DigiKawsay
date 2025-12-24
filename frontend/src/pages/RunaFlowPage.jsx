@@ -226,14 +226,14 @@ const InitiativeDialog = ({ open, onOpenChange, initiative, campaigns, users, on
             <div>
               <Label>Responsable</Label>
               <Select
-                value={formData.assigned_to}
-                onValueChange={v => setFormData({ ...formData, assigned_to: v })}
+                value={formData.assigned_to || 'none'}
+                onValueChange={v => setFormData({ ...formData, assigned_to: v === 'none' ? '' : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Sin asignar" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin asignar</SelectItem>
+                  <SelectItem value="none">Sin asignar</SelectItem>
                   {users.map(u => (
                     <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
                   ))}
