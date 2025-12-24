@@ -1541,6 +1541,17 @@ class DigiKawsayAPITester:
                     # Test get consent policy for campaign
                     self.test_consent_policy_for_campaign("participant", campaign_id)
                     break
+
+        # 23. RunaMap Network Analysis Tests (Phase 4)
+        print(f"\n🕸️  Testing RunaMap Network Analysis APIs (Phase 4)...")
+        if campaign_created:
+            for role in ["admin"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Test all network endpoints
+                    self.test_runamap_network_apis(role, campaign_id)
+                    break
         
         # Print Results
         print(f"\n" + "=" * 50)
