@@ -1866,6 +1866,231 @@ async def scan_transcript_for_pii(transcript_id: str, current_user: dict = Depen
         "recommendation": "Pseudonimizar antes de exportar" if findings else "Seguro para exportar"
     }
 
+# ============== RUNAMAP NETWORK ROUTES (Phase 4) ==============
+
+@network_router.post("/generate")
+async def generate_network(
+    request_data: GenerateNetworkRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate network graph from campaign data"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos para análisis de red")
+    
+    campaign = await db.campaigns.find_one({"id": request_data.campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    tenant_id = campaign.get("tenant_id", "default")
+    
+    # Build graph
+    nodes, edges = await network_analysis_service.build_graph_from_campaign(
+        campaign_id=request_data.campaign_id,
+        tenant_id=tenant_id,
+        include_participant_theme=request_data.include_participant_theme,
+        include_theme_cooccurrence=request_data.include_theme_cooccurrence,
+        include_participant_similarity=request_data.include_participant_similarity,
+        min_edge_weight=request_data.min_edge_weight
+    )
+    
+    # Calculate metrics
+    metrics = network_analysis_service.calculate_metrics(nodes, edges)
+    
+    # Save snapshot if name provided
+    snapshot_id = None
+    if request_data.snapshot_name:
+        snapshot_id = await network_analysis_service.save_snapshot(
+            campaign_id=request_data.campaign_id,
+            tenant_id=tenant_id,
+            nodes=nodes,
+            edges=edges,
+            metrics=metrics,
+            name=request_data.snapshot_name,
+            created_by=current_user["id"]
+        )
+    
+    return GraphResponse(
+        nodes=nodes,
+        edges=edges,
+        metrics=NetworkMetrics(**metrics),
+        snapshot_id=snapshot_id
+    )
+
+@network_router.get("/campaign/{campaign_id}")
+async def get_campaign_network(
+    campaign_id: str,
+    include_participant_theme: bool = True,
+    include_theme_cooccurrence: bool = True,
+    include_participant_similarity: bool = True,
+    min_edge_weight: float = 1.0,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get network graph for a campaign (without saving snapshot)"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos para análisis de red")
+    
+    campaign = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    tenant_id = campaign.get("tenant_id", "default")
+    
+    nodes, edges = await network_analysis_service.build_graph_from_campaign(
+        campaign_id=campaign_id,
+        tenant_id=tenant_id,
+        include_participant_theme=include_participant_theme,
+        include_theme_cooccurrence=include_theme_cooccurrence,
+        include_participant_similarity=include_participant_similarity,
+        min_edge_weight=min_edge_weight
+    )
+    
+    metrics = network_analysis_service.calculate_metrics(nodes, edges)
+    
+    return GraphResponse(
+        nodes=nodes,
+        edges=edges,
+        metrics=NetworkMetrics(**metrics)
+    )
+
+@network_router.get("/snapshots/{campaign_id}")
+async def list_network_snapshots(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """List all network snapshots for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    snapshots = await db.network_snapshots.find(
+        {"campaign_id": campaign_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    return snapshots
+
+@network_router.get("/snapshot/{snapshot_id}")
+async def get_network_snapshot(
+    snapshot_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a specific network snapshot with its nodes and edges"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    snapshot = await db.network_snapshots.find_one({"id": snapshot_id}, {"_id": 0})
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Snapshot no encontrado")
+    
+    nodes = await db.network_nodes.find({"snapshot_id": snapshot_id}, {"_id": 0}).to_list(1000)
+    edges = await db.network_edges.find({"snapshot_id": snapshot_id}, {"_id": 0}).to_list(5000)
+    
+    return {
+        "snapshot": snapshot,
+        "nodes": nodes,
+        "edges": edges
+    }
+
+@network_router.get("/metrics/{campaign_id}")
+async def get_network_metrics(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get network metrics summary for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    campaign = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    tenant_id = campaign.get("tenant_id", "default")
+    
+    nodes, edges = await network_analysis_service.build_graph_from_campaign(
+        campaign_id=campaign_id,
+        tenant_id=tenant_id
+    )
+    
+    metrics = network_analysis_service.calculate_metrics(nodes, edges)
+    
+    return NetworkMetrics(**metrics)
+
+@network_router.get("/brokers/{campaign_id}")
+async def get_network_brokers(
+    campaign_id: str,
+    limit: int = 10,
+    node_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get top brokers (high betweenness centrality nodes) for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    campaign = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    tenant_id = campaign.get("tenant_id", "default")
+    
+    nodes, edges = await network_analysis_service.build_graph_from_campaign(
+        campaign_id=campaign_id,
+        tenant_id=tenant_id
+    )
+    
+    metrics = network_analysis_service.calculate_metrics(nodes, edges)
+    
+    brokers = metrics.get("top_brokers", [])
+    if node_type:
+        brokers = [b for b in brokers if b.get("node_type") == node_type]
+    
+    return brokers[:limit]
+
+@network_router.get("/communities/{campaign_id}")
+async def get_network_communities(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get detected communities for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    campaign = await db.campaigns.find_one({"id": campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    tenant_id = campaign.get("tenant_id", "default")
+    
+    nodes, edges = await network_analysis_service.build_graph_from_campaign(
+        campaign_id=campaign_id,
+        tenant_id=tenant_id
+    )
+    
+    metrics = network_analysis_service.calculate_metrics(nodes, edges)
+    
+    return {
+        "num_communities": metrics.get("num_communities", 0),
+        "communities": metrics.get("communities", []),
+        "avg_clustering": metrics.get("avg_clustering", 0)
+    }
+
+@network_router.delete("/snapshot/{snapshot_id}")
+async def delete_network_snapshot(
+    snapshot_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a network snapshot"""
+    if current_user["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Solo admin puede eliminar snapshots")
+    
+    snapshot = await db.network_snapshots.find_one({"id": snapshot_id}, {"_id": 0})
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="Snapshot no encontrado")
+    
+    await db.network_nodes.delete_many({"snapshot_id": snapshot_id})
+    await db.network_edges.delete_many({"snapshot_id": snapshot_id})
+    await db.network_snapshots.delete_one({"id": snapshot_id})
+    
+    return {"message": "Snapshot eliminado", "id": snapshot_id}
+
 # ============== TENANT ROUTES ==============
 
 @tenant_router.post("/", response_model=Tenant)
