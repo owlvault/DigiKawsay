@@ -31,7 +31,7 @@ export const AuditPage = () => {
   const [logs, setLogs] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ action: '', resource_type: '', user_id: '' });
+  const [filters, setFilters] = useState({ action: 'all', resource_type: 'all', user_id: '' });
 
   useEffect(() => {
     fetchData();
