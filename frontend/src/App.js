@@ -53,6 +53,11 @@ function App() {
           <Route path="/insights/:campaignId/new" element={<ProtectedRoute><CreateInsightPage /></ProtectedRoute>} />
           <Route path="/taxonomy" element={<ProtectedRoute><TaxonomyPage /></ProtectedRoute>} />
           
+          {/* Phase 3.5 - Compliance & Privacy */}
+          <Route path="/audit" element={<ProtectedRoute><AuditPage /></ProtectedRoute>} />
+          <Route path="/privacy" element={<ProtectedRoute><PrivacyDashboard /></ProtectedRoute>} />
+          <Route path="/reidentification" element={<ProtectedRoute><ReidentificationPage /></ProtectedRoute>} />
+          
           {/* Placeholder routes */}
           <Route path="/insights" element={<ProtectedRoute>
             <div className="text-center py-12">
