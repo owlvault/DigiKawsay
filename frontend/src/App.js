@@ -16,6 +16,11 @@ import { InsightsPage } from "./pages/InsightsPage";
 import { CreateInsightPage } from "./pages/CreateInsightPage";
 import { TaxonomyPage } from "./pages/TaxonomyPage";
 
+// Phase 3.5 - Compliance Pages
+import { AuditPage } from "./pages/AuditPage";
+import { PrivacyDashboard } from "./pages/PrivacyDashboard";
+import { ReidentificationPage } from "./pages/ReidentificationPage";
+
 // Components
 import { Layout } from "./components/Layout";
 
