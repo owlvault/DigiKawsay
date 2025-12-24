@@ -1674,6 +1674,25 @@ class DigiKawsayAPITester:
                     # Test all network endpoints
                     self.test_runamap_network_apis(role, campaign_id)
                     break
+
+        # 24. RunaFlow Initiative Tests (Phase 5)
+        print(f"\n🚀 Testing RunaFlow Initiatives APIs (Phase 5)...")
+        if campaign_created:
+            for role in ["admin"]:
+                if role in self.tokens and role in self.campaigns:
+                    campaign_id = self.campaigns[role]['id']
+                    
+                    # Test all initiative endpoints
+                    self.test_runaflow_initiative_apis(role, campaign_id)
+                    break
+
+        # 25. RunaFlow Ritual Tests (Phase 5)
+        print(f"\n📅 Testing RunaFlow Rituals APIs (Phase 5)...")
+        for role in ["admin"]:
+            if role in self.tokens:
+                # Test all ritual endpoints
+                self.test_runaflow_ritual_apis(role)
+                break
         
         # Print Results
         print(f"\n" + "=" * 50)
