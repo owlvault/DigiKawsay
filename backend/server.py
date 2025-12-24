@@ -2368,6 +2368,446 @@ async def delete_network_snapshot(
     
     return {"message": "Snapshot eliminado", "id": snapshot_id}
 
+@network_router.get("/initiative-leaders/{campaign_id}")
+async def get_initiative_leaders_for_network(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get initiative leaders for network visualization"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    leaders = await initiative_service.get_initiative_leaders(campaign_id)
+    return leaders
+
+# ============== RUNAFLOW INITIATIVE ROUTES (Phase 5) ==============
+
+@initiative_router.post("/", response_model=Initiative)
+async def create_initiative(
+    data: InitiativeCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new initiative"""
+    if current_user["role"] not in ["admin", "facilitator", "sponsor"]:
+        raise HTTPException(status_code=403, detail="Sin permisos para crear iniciativas")
+    
+    campaign = await db.campaigns.find_one({"id": data.campaign_id}, {"_id": 0})
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaña no encontrada")
+    
+    # Get assigned user name
+    assigned_name = None
+    if data.assigned_to:
+        assigned_user = await db.users.find_one({"id": data.assigned_to}, {"_id": 0})
+        if assigned_user:
+            assigned_name = assigned_user.get("full_name")
+    
+    initiative = Initiative(
+        tenant_id=campaign.get("tenant_id", "default"),
+        campaign_id=data.campaign_id,
+        title=data.title,
+        description=data.description,
+        source_insight_ids=data.source_insight_ids,
+        source_community_id=data.source_community_id,
+        assigned_to=data.assigned_to,
+        assigned_to_name=assigned_name,
+        created_by=current_user["id"],
+        scoring_method=data.scoring_method,
+        impact_score=data.impact_score,
+        confidence_score=data.confidence_score,
+        ease_score=data.ease_score,
+        reach_score=data.reach_score,
+        effort_score=data.effort_score,
+        tags=data.tags,
+        due_date=data.due_date.isoformat() if data.due_date else None
+    )
+    
+    # Calculate score
+    initiative.final_score = initiative_service.calculate_score(initiative.model_dump())
+    
+    await db.initiatives.insert_one(serialize_document(initiative.model_dump()))
+    return initiative
+
+@initiative_router.get("/campaign/{campaign_id}")
+async def list_initiatives(
+    campaign_id: str,
+    status: Optional[str] = None,
+    assigned_to: Optional[str] = None,
+    sort_by: str = "final_score",
+    current_user: dict = Depends(get_current_user)
+):
+    """List initiatives for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst", "sponsor"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    query = {"campaign_id": campaign_id}
+    if status:
+        query["status"] = status
+    if assigned_to:
+        query["assigned_to"] = assigned_to
+    
+    sort_field = "final_score" if sort_by == "final_score" else "created_at"
+    sort_dir = -1
+    
+    initiatives = await db.initiatives.find(query, {"_id": 0}).sort(sort_field, sort_dir).to_list(200)
+    return initiatives
+
+@initiative_router.get("/stats/{campaign_id}")
+async def get_initiative_stats(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get initiative statistics for a campaign"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst", "sponsor"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    initiatives = await db.initiatives.find({"campaign_id": campaign_id}, {"_id": 0}).to_list(500)
+    
+    stats = {
+        "total": len(initiatives),
+        "by_status": defaultdict(int),
+        "avg_score": 0.0,
+        "completion_rate": 0.0,
+        "overdue_count": 0,
+        "top_contributors": []
+    }
+    
+    total_score = 0
+    completed = 0
+    contributor_count = defaultdict(int)
+    now = datetime.now(timezone.utc)
+    
+    for init in initiatives:
+        stats["by_status"][init.get("status", "backlog")] += 1
+        total_score += init.get("final_score", 0)
+        if init.get("status") == "completada":
+            completed += 1
+        if init.get("due_date"):
+            try:
+                due = datetime.fromisoformat(init["due_date"].replace("Z", "+00:00"))
+                if due < now and init.get("status") not in ["completada", "cancelada"]:
+                    stats["overdue_count"] += 1
+            except:
+                pass
+        if init.get("assigned_to"):
+            contributor_count[init["assigned_to"]] += 1
+    
+    stats["by_status"] = dict(stats["by_status"])
+    stats["avg_score"] = round(total_score / len(initiatives), 2) if initiatives else 0
+    stats["completion_rate"] = round(completed / len(initiatives) * 100, 1) if initiatives else 0
+    
+    # Top contributors
+    for user_id, count in sorted(contributor_count.items(), key=lambda x: -x[1])[:5]:
+        user = await db.users.find_one({"id": user_id}, {"_id": 0, "hashed_password": 0})
+        if user:
+            stats["top_contributors"].append({
+                "user_id": user_id,
+                "name": user.get("full_name"),
+                "initiatives_count": count
+            })
+    
+    return InitiativeStats(**stats)
+
+@initiative_router.get("/{initiative_id}")
+async def get_initiative(
+    initiative_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single initiative"""
+    initiative = await db.initiatives.find_one({"id": initiative_id}, {"_id": 0})
+    if not initiative:
+        raise HTTPException(status_code=404, detail="Iniciativa no encontrada")
+    return initiative
+
+@initiative_router.put("/{initiative_id}")
+async def update_initiative(
+    initiative_id: str,
+    data: InitiativeUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update an initiative"""
+    if current_user["role"] not in ["admin", "facilitator", "sponsor"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    initiative = await db.initiatives.find_one({"id": initiative_id}, {"_id": 0})
+    if not initiative:
+        raise HTTPException(status_code=404, detail="Iniciativa no encontrada")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    # Handle status transitions
+    if "status" in update_data:
+        if update_data["status"] == "en_progreso" and initiative.get("status") != "en_progreso":
+            update_data["started_at"] = datetime.now(timezone.utc).isoformat()
+        elif update_data["status"] == "completada":
+            update_data["completed_at"] = datetime.now(timezone.utc).isoformat()
+            update_data["progress_percentage"] = 100
+    
+    # Update assigned user name
+    if "assigned_to" in update_data and update_data["assigned_to"]:
+        assigned_user = await db.users.find_one({"id": update_data["assigned_to"]}, {"_id": 0})
+        if assigned_user:
+            update_data["assigned_to_name"] = assigned_user.get("full_name")
+    
+    # Handle due_date
+    if "due_date" in update_data and update_data["due_date"]:
+        update_data["due_date"] = update_data["due_date"].isoformat()
+    
+    # Recalculate score if scoring fields changed
+    merged = {**initiative, **update_data}
+    update_data["final_score"] = initiative_service.calculate_score(merged)
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.initiatives.update_one({"id": initiative_id}, {"$set": update_data})
+    return await db.initiatives.find_one({"id": initiative_id}, {"_id": 0})
+
+@initiative_router.delete("/{initiative_id}")
+async def delete_initiative(
+    initiative_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete an initiative"""
+    if current_user["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Solo admin puede eliminar")
+    
+    result = await db.initiatives.delete_one({"id": initiative_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Iniciativa no encontrada")
+    
+    await db.initiative_comments.delete_many({"initiative_id": initiative_id})
+    return {"message": "Iniciativa eliminada", "id": initiative_id}
+
+@initiative_router.post("/{initiative_id}/comments")
+async def add_initiative_comment(
+    initiative_id: str,
+    content: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Add a comment to an initiative"""
+    initiative = await db.initiatives.find_one({"id": initiative_id}, {"_id": 0})
+    if not initiative:
+        raise HTTPException(status_code=404, detail="Iniciativa no encontrada")
+    
+    comment = InitiativeComment(
+        initiative_id=initiative_id,
+        user_id=current_user["id"],
+        user_name=current_user.get("full_name", "Unknown"),
+        content=content
+    )
+    
+    await db.initiative_comments.insert_one(serialize_document(comment.model_dump()))
+    await db.initiatives.update_one(
+        {"id": initiative_id},
+        {"$inc": {"comments_count": 1}}
+    )
+    
+    return comment
+
+@initiative_router.get("/{initiative_id}/comments")
+async def get_initiative_comments(
+    initiative_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get comments for an initiative"""
+    comments = await db.initiative_comments.find(
+        {"initiative_id": initiative_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    return comments
+
+# ============== RUNAFLOW RITUAL ROUTES (Phase 5) ==============
+
+@ritual_router.post("/", response_model=Ritual)
+async def create_ritual(
+    data: RitualCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new ritual"""
+    if current_user["role"] not in ["admin", "facilitator"]:
+        raise HTTPException(status_code=403, detail="Sin permisos para crear rituales")
+    
+    tenant_id = "default"
+    if data.campaign_id:
+        campaign = await db.campaigns.find_one({"id": data.campaign_id}, {"_id": 0})
+        if campaign:
+            tenant_id = campaign.get("tenant_id", "default")
+    
+    ritual = Ritual(
+        tenant_id=tenant_id,
+        campaign_id=data.campaign_id,
+        name=data.name,
+        description=data.description,
+        ritual_type=data.ritual_type,
+        day_of_week=data.day_of_week,
+        day_of_month=data.day_of_month,
+        time_of_day=data.time_of_day,
+        duration_minutes=data.duration_minutes,
+        participants=data.participants,
+        agenda_template=data.agenda_template,
+        is_active=data.is_active,
+        created_by=current_user["id"]
+    )
+    
+    # Calculate next occurrence
+    next_occ = ritual_service.calculate_next_occurrence(ritual.model_dump())
+    if next_occ:
+        ritual.next_occurrence = next_occ.isoformat()
+    
+    await db.rituals.insert_one(serialize_document(ritual.model_dump()))
+    return ritual
+
+@ritual_router.get("/")
+async def list_rituals(
+    campaign_id: Optional[str] = None,
+    ritual_type: Optional[str] = None,
+    is_active: bool = True,
+    current_user: dict = Depends(get_current_user)
+):
+    """List rituals"""
+    if current_user["role"] not in ["admin", "facilitator", "analyst", "sponsor"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    query = {"is_active": is_active}
+    if campaign_id:
+        query["campaign_id"] = campaign_id
+    if ritual_type:
+        query["ritual_type"] = ritual_type
+    
+    rituals = await db.rituals.find(query, {"_id": 0}).sort("next_occurrence", 1).to_list(100)
+    return rituals
+
+@ritual_router.get("/{ritual_id}")
+async def get_ritual(
+    ritual_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a single ritual"""
+    ritual = await db.rituals.find_one({"id": ritual_id}, {"_id": 0})
+    if not ritual:
+        raise HTTPException(status_code=404, detail="Ritual no encontrado")
+    return ritual
+
+@ritual_router.put("/{ritual_id}")
+async def update_ritual(
+    ritual_id: str,
+    data: RitualUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a ritual"""
+    if current_user["role"] not in ["admin", "facilitator"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    ritual = await db.rituals.find_one({"id": ritual_id}, {"_id": 0})
+    if not ritual:
+        raise HTTPException(status_code=404, detail="Ritual no encontrado")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    # Recalculate next occurrence if schedule changed
+    merged = {**ritual, **update_data}
+    next_occ = ritual_service.calculate_next_occurrence(merged)
+    if next_occ:
+        update_data["next_occurrence"] = next_occ.isoformat()
+    
+    await db.rituals.update_one({"id": ritual_id}, {"$set": update_data})
+    return await db.rituals.find_one({"id": ritual_id}, {"_id": 0})
+
+@ritual_router.delete("/{ritual_id}")
+async def delete_ritual(
+    ritual_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete a ritual"""
+    if current_user["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Solo admin puede eliminar")
+    
+    result = await db.rituals.delete_one({"id": ritual_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Ritual no encontrado")
+    
+    return {"message": "Ritual eliminado", "id": ritual_id}
+
+@ritual_router.post("/{ritual_id}/occurrence")
+async def create_ritual_occurrence(
+    ritual_id: str,
+    scheduled_at: datetime,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new occurrence for a ritual"""
+    if current_user["role"] not in ["admin", "facilitator"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    ritual = await db.rituals.find_one({"id": ritual_id}, {"_id": 0})
+    if not ritual:
+        raise HTTPException(status_code=404, detail="Ritual no encontrado")
+    
+    occurrence = RitualOccurrence(
+        ritual_id=ritual_id,
+        scheduled_at=scheduled_at.isoformat()
+    )
+    
+    await db.ritual_occurrences.insert_one(serialize_document(occurrence.model_dump()))
+    
+    # Update ritual stats
+    await db.rituals.update_one(
+        {"id": ritual_id},
+        {"$inc": {"occurrences_count": 1}}
+    )
+    
+    return occurrence
+
+@ritual_router.get("/{ritual_id}/occurrences")
+async def get_ritual_occurrences(
+    ritual_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get occurrences for a ritual"""
+    occurrences = await db.ritual_occurrences.find(
+        {"ritual_id": ritual_id},
+        {"_id": 0}
+    ).sort("scheduled_at", -1).to_list(50)
+    return occurrences
+
+@ritual_router.patch("/{ritual_id}/occurrence/{occurrence_id}")
+async def update_ritual_occurrence(
+    ritual_id: str,
+    occurrence_id: str,
+    status: Optional[str] = None,
+    notes: Optional[str] = None,
+    attendees: Optional[List[str]] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a ritual occurrence"""
+    if current_user["role"] not in ["admin", "facilitator"]:
+        raise HTTPException(status_code=403, detail="Sin permisos")
+    
+    update_data = {"updated_at": datetime.now(timezone.utc).isoformat()}
+    if status:
+        update_data["status"] = status
+        if status == "in_progress":
+            update_data["started_at"] = datetime.now(timezone.utc).isoformat()
+        elif status == "completed":
+            update_data["ended_at"] = datetime.now(timezone.utc).isoformat()
+    if notes is not None:
+        update_data["notes"] = notes
+    if attendees is not None:
+        update_data["attendees"] = attendees
+    
+    await db.ritual_occurrences.update_one(
+        {"id": occurrence_id, "ritual_id": ritual_id},
+        {"$set": update_data}
+    )
+    
+    # Update ritual last_occurrence
+    if status == "completed":
+        await db.rituals.update_one(
+            {"id": ritual_id},
+            {"$set": {"last_occurrence": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    return await db.ritual_occurrences.find_one({"id": occurrence_id}, {"_id": 0})
+
 # ============== TENANT ROUTES ==============
 
 @tenant_router.post("/", response_model=Tenant)
