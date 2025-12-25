@@ -75,17 +75,14 @@ function App() {
           <Route path="/roadmap" element={<ProtectedRoute><RunaFlowPage /></ProtectedRoute>} />
           <Route path="/rituals" element={<ProtectedRoute><RitualsPage /></ProtectedRoute>} />
           
+          {/* Phase 6 - RunaData */}
+          <Route path="/governance" element={<ProtectedRoute><GovernancePage /></ProtectedRoute>} />
+          
           {/* Placeholder routes */}
           <Route path="/insights" element={<ProtectedRoute>
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold font-['Outfit']">RunaCultur - Hallazgos</h2>
               <p className="text-muted-foreground mt-2">Selecciona una campaña para ver sus hallazgos</p>
-            </div>
-          </ProtectedRoute>} />
-          <Route path="/governance" element={<ProtectedRoute>
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold font-['Outfit']">RunaData - Gobernanza</h2>
-              <p className="text-muted-foreground mt-2">Disponible en Fase 5</p>
             </div>
           </ProtectedRoute>} />
           
