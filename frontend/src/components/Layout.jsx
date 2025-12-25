@@ -29,7 +29,8 @@ import {
   Eye,
   ClipboardList,
   Lock,
-  Calendar
+  Calendar,
+  Activity
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
