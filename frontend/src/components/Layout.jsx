@@ -74,8 +74,8 @@ export const Layout = ({ children }) => {
     // Phase 5 - RunaFlow
     { to: '/roadmap', icon: Route, label: 'RunaFlow', roles: ['admin', 'facilitator', 'analyst', 'sponsor'] },
     { to: '/rituals', icon: Calendar, label: 'Rituales', roles: ['admin', 'facilitator'] },
-    // Future phases
-    { to: '/governance', icon: Shield, label: 'Gobernanza', roles: ['admin'], disabled: true },
+    // Phase 6 - RunaData
+    { to: '/governance', icon: Shield, label: 'RunaData', roles: ['admin', 'data_steward', 'security_officer'] },
   ];
 
   const filteredNavItems = navItems.filter(item => 
