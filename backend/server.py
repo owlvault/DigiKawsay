@@ -4121,6 +4121,7 @@ api_router.include_router(reidentification_router)
 api_router.include_router(network_router)
 api_router.include_router(initiative_router)
 api_router.include_router(ritual_router)
+api_router.include_router(governance_router)
 
 app.include_router(api_router)
 
