@@ -3302,7 +3302,7 @@ async def create_data_policy(
     """Create a new data policy"""
     governance_service.check_permission(current_user, Permission.MANAGE_DATA_POLICIES)
     
-    tenant_id = current_user.get("tenant_id", "default")
+    tenant_id = current_user.get("tenant_id") or "default"
     
     # Deactivate existing policies
     await db.data_policies.update_many(
