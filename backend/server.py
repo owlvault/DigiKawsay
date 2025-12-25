@@ -47,7 +47,7 @@ PII_VAULT_ENCRYPTION_KEY = os.environ.get('PII_VAULT_KEY', 'default_vault_key_ch
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-app = FastAPI(title="DigiKawsay API", version="0.6.0")
+app = FastAPI(title="DigiKawsay API", version="0.7.0")
 
 # Routers
 api_router = APIRouter(prefix="/api")
