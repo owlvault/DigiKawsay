@@ -1,9 +1,9 @@
-# Testing Data for Phase 5: RunaFlow
+# Testing Data for Phase 6: RunaData
 
-user_problem_statement: "DigiKawsay - Phase 5: RunaFlow - Gestión de Iniciativas y Rituales Organizacionales"
+user_problem_statement: "DigiKawsay - Phase 6: RunaData - Gobernanza de Datos con RBAC/ABAC, control dual y archivado"
 
 backend:
-  - task: "Initiatives CRUD API"
+  - task: "RBAC Permissions API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -13,9 +13,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST/GET/PUT/DELETE /api/initiatives/ endpoints working - tested with curl"
+        comment: "GET /api/governance/permissions returns 27 permissions for admin role"
 
-  - task: "Initiative Scoring (ICE/RICE)"
+  - task: "Data Policies API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -25,9 +25,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "ICE and RICE scoring calculations working - final_score calculated on create/update"
+        comment: "POST/GET/PUT /api/governance/policies endpoints working"
 
-  - task: "Rituals CRUD API"
+  - task: "Dual Approval Workflow"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -37,9 +37,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST/GET/PUT/DELETE /api/rituals/ endpoints implemented"
+        comment: "Dual approval requires admin + security_officer. Endpoints working."
 
-  - task: "Initiative Stats API"
+  - task: "Data Archival API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -49,32 +49,32 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/initiatives/stats/{campaign_id} returns stats with top_contributors"
+        comment: "POST /api/governance/archive/run and GET /api/governance/archive/records working"
+
+  - task: "Governance Metrics"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/governance/metrics returns compliance score 80%"
 
 frontend:
-  - task: "RunaFlow Page"
+  - task: "GovernancePage"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/RunaFlowPage.jsx"
+    file: "/app/frontend/src/pages/GovernancePage.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Page loads with Kanban view, stats, create/edit dialog. SelectItem fix applied."
-
-  - task: "Rituals Page"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/RitualsPage.jsx"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Page loads with ritual cards, create/edit dialog. SelectItem fix applied."
+        comment: "Page loads with dashboard, metrics cards, tabs for policies/approvals/archive/permissions"
 
   - task: "Navigation and Routes"
     implemented: true
@@ -86,19 +86,20 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Routes /roadmap and /rituals added. Navigation links enabled in Layout.jsx"
+        comment: "Route /governance added. Navigation link enabled in Layout.jsx for admin/data_steward/security_officer"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 6
+  test_sequence: 7
   run_ui: true
 
 test_plan:
   current_focus:
-    - "RunaFlow Page - verify Kanban view, create initiative, scoring"
-    - "Rituals Page - verify create ritual dialog and list"
-    - "Backend APIs - verify all Phase 5 endpoints"
+    - "GovernancePage - verify dashboard, metrics, tabs"
+    - "Data Policies - create and list policies"
+    - "Dual Approval - test approval workflow"
+    - "Permissions API - verify role permissions"
   stuck_tasks: []
   test_all: true
 
