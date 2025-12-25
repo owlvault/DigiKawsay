@@ -1580,6 +1580,208 @@ class DigiKawsayAPITester:
         )
         return success, response
 
+    def test_runadata_governance_apis(self, role="admin"):
+        """Test RunaData Governance APIs (Phase 6)"""
+        if role not in self.tokens:
+            self.log_test(f"RunaData Governance APIs - No {role} Token", False, error=f"{role} not logged in")
+            return False
+
+        # Test 1: GET /api/governance/permissions - Get User Permissions
+        success, response = self.run_test(
+            f"Get Governance Permissions ({role})",
+            "GET",
+            "governance/permissions",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            permissions = response.get('permissions', [])
+            user_role = response.get('role', 'unknown')
+            self.log_test("Get Permissions API", True, f"Role: {user_role}, Permissions: {len(permissions)}")
+        else:
+            self.log_test("Get Permissions API", False, error="Failed to get permissions")
+
+        # Test 2: GET /api/governance/policies - List Data Policies
+        success, response = self.run_test(
+            f"List Data Policies ({role})",
+            "GET",
+            "governance/policies",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            policies_count = len(response) if isinstance(response, list) else 0
+            self.log_test("List Policies API", True, f"Retrieved {policies_count} data policies")
+        else:
+            self.log_test("List Policies API", False, error="Failed to list policies")
+
+        # Test 3: POST /api/governance/policies - Create Data Policy
+        policy_data = {
+            "name": f"Test Policy {datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "description": "Automated test policy for API testing",
+            "retention_days": 365,
+            "archive_after_days": 180,
+            "auto_anonymize_days": 90,
+            "allow_transcript_export": False,
+            "allow_insight_export": True,
+            "allow_bulk_export": False,
+            "require_approval_for_export": True,
+            "anonymization_level": "standard",
+            "suppress_small_groups": True,
+            "min_group_size": 5
+        }
+        
+        success, response = self.run_test(
+            f"Create Data Policy ({role})",
+            "POST",
+            "governance/policies",
+            201,
+            data=policy_data,
+            token=self.tokens[role]
+        )
+        
+        policy_id = None
+        if success and 'id' in response:
+            policy_id = response['id']
+            policy_name = response.get('name', 'Unknown')
+            self.log_test("Create Policy API", True, f"Created policy: {policy_name} (ID: {policy_id})")
+        else:
+            self.log_test("Create Policy API", False, error="Failed to create policy")
+
+        # Test 4: PUT /api/governance/policies/{id} - Update Policy (if created)
+        if policy_id:
+            update_data = {
+                "description": "Updated test policy description",
+                "retention_days": 400,
+                "anonymization_level": "strict"
+            }
+            
+            success, response = self.run_test(
+                f"Update Data Policy ({role})",
+                "PUT",
+                f"governance/policies/{policy_id}",
+                200,
+                data=update_data,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                new_retention = response.get('retention_days', 0)
+                new_level = response.get('anonymization_level', 'unknown')
+                self.log_test("Update Policy API", True, f"Updated policy - Retention: {new_retention} days, Level: {new_level}")
+            else:
+                self.log_test("Update Policy API", False, error="Failed to update policy")
+
+        # Test 5: GET /api/governance/dual-approval/pending - Get Pending Approvals
+        success, response = self.run_test(
+            f"Get Pending Approvals ({role})",
+            "GET",
+            "governance/dual-approval/pending",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            pending_count = len(response) if isinstance(response, list) else 0
+            self.log_test("Get Pending Approvals API", True, f"Found {pending_count} pending approval requests")
+        else:
+            self.log_test("Get Pending Approvals API", False, error="Failed to get pending approvals")
+
+        # Test 6: POST /api/governance/dual-approval/request - Create Dual Approval Request
+        approval_data = {
+            "request_type": "reidentification",
+            "resource_type": "transcript",
+            "resource_id": f"test-resource-{datetime.now().strftime('%H%M%S')}",
+            "justification": "Automated test request for safety concern verification"
+        }
+        
+        success, response = self.run_test(
+            f"Create Dual Approval Request ({role})",
+            "POST",
+            "governance/dual-approval/request",
+            201,
+            data=approval_data,
+            token=self.tokens[role]
+        )
+        
+        approval_id = None
+        if success and 'id' in response:
+            approval_id = response['id']
+            request_type = response.get('request_type', 'unknown')
+            status = response.get('status', 'unknown')
+            self.log_test("Create Approval Request API", True, f"Created {request_type} request (ID: {approval_id}, Status: {status})")
+        else:
+            self.log_test("Create Approval Request API", False, error="Failed to create approval request")
+
+        # Test 7: POST /api/governance/dual-approval/{id}/approve - Approve Request (if created)
+        if approval_id:
+            success, response = self.run_test(
+                f"Approve Dual Request ({role})",
+                "POST",
+                f"governance/dual-approval/{approval_id}/approve",
+                200,
+                token=self.tokens[role]
+            )
+            
+            if success:
+                message = response.get('message', 'Approved')
+                self.log_test("Approve Request API", True, f"Approval result: {message}")
+            else:
+                self.log_test("Approve Request API", False, error="Failed to approve request")
+
+        # Test 8: GET /api/governance/archive/records - Get Archived Records
+        success, response = self.run_test(
+            f"Get Archived Records ({role})",
+            "GET",
+            "governance/archive/records",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            archived_count = len(response) if isinstance(response, list) else 0
+            self.log_test("Get Archived Records API", True, f"Found {archived_count} archived records")
+        else:
+            self.log_test("Get Archived Records API", False, error="Failed to get archived records")
+
+        # Test 9: POST /api/governance/archive/run - Run Data Archival
+        success, response = self.run_test(
+            f"Run Data Archival ({role})",
+            "POST",
+            "governance/archive/run",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            archived = response.get('archived', {})
+            total_archived = sum(archived.values()) if isinstance(archived, dict) else 0
+            self.log_test("Run Archival API", True, f"Archival completed - {total_archived} records archived")
+        else:
+            self.log_test("Run Archival API", False, error="Failed to run archival")
+
+        # Test 10: GET /api/governance/metrics - Get Governance Metrics
+        success, response = self.run_test(
+            f"Get Governance Metrics ({role})",
+            "GET",
+            "governance/metrics",
+            200,
+            token=self.tokens[role]
+        )
+        
+        if success:
+            compliance_score = response.get('compliance_score', 0)
+            active_policies = response.get('active_policies', 0)
+            pending_approvals = response.get('pending_approvals', 0)
+            archived_records = response.get('archived_records', 0)
+            self.log_test("Get Metrics API", True, 
+                         f"Compliance: {compliance_score:.1f}%, Policies: {active_policies}, Pending: {pending_approvals}, Archived: {archived_records}")
+        else:
+            self.log_test("Get Metrics API", False, error="Failed to get governance metrics")
+
+        return True
     def run_full_test_suite(self):
         """Run complete test suite"""
         print("🚀 Starting DigiKawsay API Test Suite")
