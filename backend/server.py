@@ -3265,6 +3265,363 @@ async def update_ritual_occurrence(
     
     return await db.ritual_occurrences.find_one({"id": occurrence_id}, {"_id": 0})
 
+# ============== RUNADATA GOVERNANCE ROUTES (Phase 6) ==============
+
+@governance_router.get("/permissions")
+async def get_user_permissions(current_user: dict = Depends(get_current_user)):
+    """Get current user's permissions"""
+    permissions = governance_service.get_user_permissions(current_user)
+    return {
+        "user_id": current_user["id"],
+        "role": current_user.get("role"),
+        "permissions": permissions,
+        "permissions_count": len(permissions)
+    }
+
+@governance_router.get("/roles")
+async def get_all_roles(current_user: dict = Depends(get_current_user)):
+    """Get all available roles and their permissions"""
+    if current_user["role"] not in ["admin"]:
+        raise HTTPException(status_code=403, detail="Solo admin puede ver roles")
+    
+    return {
+        role: {
+            "name": role,
+            "permissions": perms,
+            "permissions_count": len(perms)
+        }
+        for role, perms in ROLE_PERMISSIONS.items()
+    }
+
+# Data Policies
+@governance_router.post("/policies", response_model=DataPolicy)
+async def create_data_policy(
+    data: DataPolicyCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new data policy"""
+    governance_service.check_permission(current_user, Permission.MANAGE_DATA_POLICIES)
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    
+    # Deactivate existing policies
+    await db.data_policies.update_many(
+        {"tenant_id": tenant_id, "is_active": True},
+        {"$set": {"is_active": False}}
+    )
+    
+    policy = DataPolicy(
+        tenant_id=tenant_id,
+        created_by=current_user["id"],
+        **data.model_dump()
+    )
+    
+    await db.data_policies.insert_one(serialize_document(policy.model_dump()))
+    return policy
+
+@governance_router.get("/policies")
+async def list_data_policies(
+    active_only: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
+    """List data policies"""
+    governance_service.check_permission(current_user, Permission.VIEW_AUDIT_LOGS)
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    query = {"tenant_id": tenant_id}
+    if active_only:
+        query["is_active"] = True
+    
+    policies = await db.data_policies.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    return policies
+
+@governance_router.get("/policies/active")
+async def get_active_policy(current_user: dict = Depends(get_current_user)):
+    """Get active data policy for current tenant"""
+    tenant_id = current_user.get("tenant_id", "default")
+    policy = await governance_service.get_active_policy(tenant_id)
+    if not policy:
+        return {"message": "No hay política activa", "policy": None}
+    return {"policy": policy}
+
+@governance_router.put("/policies/{policy_id}")
+async def update_data_policy(
+    policy_id: str,
+    data: DataPolicyUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update a data policy"""
+    governance_service.check_permission(current_user, Permission.MANAGE_DATA_POLICIES)
+    
+    policy = await db.data_policies.find_one({"id": policy_id}, {"_id": 0})
+    if not policy:
+        raise HTTPException(status_code=404, detail="Política no encontrada")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.data_policies.update_one({"id": policy_id}, {"$set": update_data})
+    return await db.data_policies.find_one({"id": policy_id}, {"_id": 0})
+
+# Dual Approval Workflow
+@governance_router.post("/dual-approval/request")
+async def create_dual_approval_request(
+    data: DualApprovalCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a dual approval request for sensitive operations"""
+    tenant_id = current_user.get("tenant_id", "default")
+    
+    request = DualApprovalRequest(
+        tenant_id=tenant_id,
+        request_type=data.request_type,
+        resource_type=data.resource_type,
+        resource_id=data.resource_id,
+        requested_by=current_user["id"],
+        requested_by_name=current_user.get("full_name", "Unknown"),
+        justification=data.justification
+    )
+    
+    await db.dual_approval_requests.insert_one(serialize_document(request.model_dump()))
+    
+    # Log audit
+    await db.audit_logs.insert_one(serialize_document({
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "user_id": current_user["id"],
+        "user_name": current_user.get("full_name"),
+        "action": "dual_approval_requested",
+        "resource_type": data.resource_type,
+        "resource_id": data.resource_id,
+        "details": {"request_id": request.id, "request_type": data.request_type},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }))
+    
+    return request
+
+@governance_router.get("/dual-approval/pending")
+async def list_pending_approvals(
+    request_type: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """List pending dual approval requests"""
+    if current_user["role"] not in ["admin", "security_officer"]:
+        raise HTTPException(status_code=403, detail="Solo admin o security_officer")
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    query = {"tenant_id": tenant_id, "status": {"$in": ["pending", "first_approved"]}}
+    if request_type:
+        query["request_type"] = request_type
+    
+    requests = await db.dual_approval_requests.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return requests
+
+@governance_router.get("/dual-approval/{request_id}")
+async def get_dual_approval_request(
+    request_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get a specific dual approval request"""
+    request = await db.dual_approval_requests.find_one({"id": request_id}, {"_id": 0})
+    if not request:
+        raise HTTPException(status_code=404, detail="Solicitud no encontrada")
+    return request
+
+@governance_router.post("/dual-approval/{request_id}/approve")
+async def approve_dual_approval_request(
+    request_id: str,
+    comment: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Approve a dual approval request (requires admin + security_officer)"""
+    if current_user["role"] not in ["admin", "security_officer"]:
+        raise HTTPException(status_code=403, detail="Solo admin o security_officer pueden aprobar")
+    
+    result = await governance_service.process_dual_approval(
+        request_id=request_id,
+        approver=current_user,
+        approved=True,
+        comment=comment
+    )
+    
+    # Log audit
+    tenant_id = current_user.get("tenant_id", "default")
+    await db.audit_logs.insert_one(serialize_document({
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "user_id": current_user["id"],
+        "user_name": current_user.get("full_name"),
+        "action": "dual_approval_approved",
+        "resource_type": "dual_approval",
+        "resource_id": request_id,
+        "details": {"result_status": result.get("status"), "comment": comment},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }))
+    
+    return result
+
+@governance_router.post("/dual-approval/{request_id}/reject")
+async def reject_dual_approval_request(
+    request_id: str,
+    reason: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Reject a dual approval request"""
+    if current_user["role"] not in ["admin", "security_officer"]:
+        raise HTTPException(status_code=403, detail="Solo admin o security_officer pueden rechazar")
+    
+    result = await governance_service.process_dual_approval(
+        request_id=request_id,
+        approver=current_user,
+        approved=False,
+        comment=reason
+    )
+    
+    # Log audit
+    tenant_id = current_user.get("tenant_id", "default")
+    await db.audit_logs.insert_one(serialize_document({
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "user_id": current_user["id"],
+        "user_name": current_user.get("full_name"),
+        "action": "dual_approval_rejected",
+        "resource_type": "dual_approval",
+        "resource_id": request_id,
+        "details": {"reason": reason},
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }))
+    
+    return result
+
+# Data Archival
+@governance_router.post("/archive/run")
+async def run_data_archival(
+    current_user: dict = Depends(get_current_user)
+):
+    """Manually run data archival based on active policy"""
+    governance_service.check_permission(current_user, Permission.ARCHIVE_DATA)
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    policy = await governance_service.get_active_policy(tenant_id)
+    
+    if not policy:
+        raise HTTPException(status_code=400, detail="No hay política activa para archivar datos")
+    
+    result = await governance_service.archive_old_data(
+        tenant_id=tenant_id,
+        policy=policy,
+        archived_by=current_user["id"]
+    )
+    
+    # Log audit
+    await db.audit_logs.insert_one(serialize_document({
+        "id": str(uuid.uuid4()),
+        "tenant_id": tenant_id,
+        "user_id": current_user["id"],
+        "user_name": current_user.get("full_name"),
+        "action": "data_archival_executed",
+        "resource_type": "system",
+        "resource_id": "archival",
+        "details": result,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }))
+    
+    return {
+        "message": "Archivado completado",
+        "archived": result,
+        "policy_used": policy.get("name")
+    }
+
+@governance_router.get("/archive/records")
+async def list_archived_records(
+    collection: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """List archived data records"""
+    governance_service.check_permission(current_user, Permission.VIEW_AUDIT_LOGS)
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    query = {"tenant_id": tenant_id}
+    if collection:
+        query["original_collection"] = collection
+    
+    records = await db.archived_data.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return records
+
+# Governance Metrics & Dashboard
+@governance_router.get("/metrics")
+async def get_governance_metrics(
+    current_user: dict = Depends(get_current_user)
+):
+    """Get governance metrics for dashboard"""
+    governance_service.check_permission(current_user, Permission.VIEW_AUDIT_LOGS)
+    
+    tenant_id = current_user.get("tenant_id", "default")
+    
+    # Count policies
+    total_policies = await db.data_policies.count_documents({"tenant_id": tenant_id})
+    active_policies = await db.data_policies.count_documents({"tenant_id": tenant_id, "is_active": True})
+    
+    # Pending approvals
+    pending_approvals = await db.dual_approval_requests.count_documents({
+        "tenant_id": tenant_id,
+        "status": {"$in": ["pending", "first_approved"]}
+    })
+    
+    # Archived records
+    archived_records = await db.archived_data.count_documents({"tenant_id": tenant_id})
+    
+    # Data by age
+    now = datetime.now(timezone.utc)
+    data_age = {
+        "last_30_days": 0,
+        "30_90_days": 0,
+        "90_180_days": 0,
+        "over_180_days": 0
+    }
+    
+    all_sessions = await db.sessions.find({"tenant_id": tenant_id}, {"created_at": 1, "_id": 0}).to_list(1000)
+    for session in all_sessions:
+        try:
+            created = datetime.fromisoformat(session.get("created_at", "").replace("Z", "+00:00"))
+            age_days = (now - created).days
+            if age_days <= 30:
+                data_age["last_30_days"] += 1
+            elif age_days <= 90:
+                data_age["30_90_days"] += 1
+            elif age_days <= 180:
+                data_age["90_180_days"] += 1
+            else:
+                data_age["over_180_days"] += 1
+        except:
+            pass
+    
+    # Compliance score
+    compliance_score = await governance_service.calculate_compliance_score(tenant_id)
+    
+    # Recent violations (audit logs with violation actions)
+    recent_violations = await db.audit_logs.find({
+        "tenant_id": tenant_id,
+        "action": {"$regex": "violation|unauthorized|failed"}
+    }, {"_id": 0}).sort("created_at", -1).limit(10).to_list(10)
+    
+    return GovernanceMetrics(
+        total_policies=total_policies,
+        active_policies=active_policies,
+        pending_approvals=pending_approvals,
+        archived_records=archived_records,
+        data_by_age=data_age,
+        compliance_score=compliance_score,
+        recent_violations=recent_violations
+    )
+
+@governance_router.get("/compliance-score")
+async def get_compliance_score(current_user: dict = Depends(get_current_user)):
+    """Get current compliance score"""
+    tenant_id = current_user.get("tenant_id", "default")
+    score = await governance_service.calculate_compliance_score(tenant_id)
+    return {"compliance_score": score, "max_score": 100}
+
 # ============== TENANT ROUTES ==============
 
 @tenant_router.post("/", response_model=Tenant)
