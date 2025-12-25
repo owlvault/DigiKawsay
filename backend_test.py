@@ -1939,6 +1939,14 @@ class DigiKawsayAPITester:
                 # Test all ritual endpoints
                 self.test_runaflow_ritual_apis(role)
                 break
+
+        # 26. RunaData Governance Tests (Phase 6)
+        print(f"\n🛡️ Testing RunaData Governance APIs (Phase 6)...")
+        for role in ["admin"]:
+            if role in self.tokens:
+                # Test all governance endpoints
+                self.test_runadata_governance_apis(role)
+                break
         
         # Print Results
         print(f"\n" + "=" * 50)
