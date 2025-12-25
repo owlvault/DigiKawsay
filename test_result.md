@@ -1,9 +1,9 @@
-# Testing Data for Phase 6: RunaData
+# Testing Data for Phase 7: Observability
 
-user_problem_statement: "DigiKawsay - Phase 6: RunaData - Gobernanza de Datos con RBAC/ABAC, control dual y archivado"
+user_problem_statement: "DigiKawsay - Phase 7: Observabilidad - Logging estructurado, métricas y alertas"
 
 backend:
-  - task: "RBAC Permissions API"
+  - task: "Structured Logging"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -13,9 +13,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/governance/permissions returns 27 permissions for admin role"
+        comment: "JSON structured logging with correlation_id, user_id, tenant_id working"
 
-  - task: "Data Policies API"
+  - task: "System Metrics API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -25,9 +25,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST/GET/PUT /api/governance/policies endpoints working"
+        comment: "GET /api/observability/metrics/system returns CPU, memory, disk, connections"
 
-  - task: "Dual Approval Workflow"
+  - task: "Business Metrics API"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -37,9 +37,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Dual approval requires admin + security_officer. Endpoints working."
+        comment: "GET /api/observability/metrics/business returns users, campaigns, insights counts"
 
-  - task: "Data Archival API"
+  - task: "Endpoint Metrics"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -49,9 +49,9 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "POST /api/governance/archive/run and GET /api/governance/archive/records working"
+        comment: "Per-endpoint metrics with latency percentiles (avg, p95, p99)"
 
-  - task: "Governance Metrics"
+  - task: "Alerts System"
     implemented: true
     working: true
     file: "/app/backend/server.py"
@@ -61,22 +61,34 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "GET /api/governance/metrics returns compliance score 80%"
+        comment: "Alert creation, threshold checking, acknowledge endpoints working"
+
+  - task: "Health Check"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/observability/health returns healthy status"
 
 frontend:
-  - task: "GovernancePage"
+  - task: "ObservabilityPage"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/GovernancePage.jsx"
+    file: "/app/frontend/src/pages/ObservabilityPage.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Page loads with dashboard, metrics cards, tabs for policies/approvals/archive/permissions"
+        comment: "Dashboard with system/business metrics, endpoints tab, logs viewer, alerts panel"
 
-  - task: "Navigation and Routes"
+  - task: "Navigation"
     implemented: true
     working: true
     file: "/app/frontend/src/App.js"
@@ -86,20 +98,19 @@ frontend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Route /governance added. Navigation link enabled in Layout.jsx for admin/data_steward/security_officer"
+        comment: "Route /observability added, Monitoreo link in sidebar for admin/security_officer"
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 7
+  test_sequence: 8
   run_ui: true
 
 test_plan:
   current_focus:
-    - "GovernancePage - verify dashboard, metrics, tabs"
-    - "Data Policies - create and list policies"
-    - "Dual Approval - test approval workflow"
-    - "Permissions API - verify role permissions"
+    - "ObservabilityPage - verify dashboard, metrics, logs, alerts"
+    - "Health Check endpoint - no auth required"
+    - "System and Business Metrics APIs"
   stuck_tasks: []
   test_all: true
 
