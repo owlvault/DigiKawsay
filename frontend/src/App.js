@@ -28,6 +28,9 @@ import { RunaMapPage } from "./pages/RunaMapPage";
 import { RunaFlowPage } from "./pages/RunaFlowPage";
 import { RitualsPage } from "./pages/RitualsPage";
 
+// Phase 6 - RunaData
+import { GovernancePage } from "./pages/GovernancePage";
+
 // Components
 import { Layout } from "./components/Layout";
 
