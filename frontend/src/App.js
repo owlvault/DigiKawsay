@@ -81,6 +81,9 @@ function App() {
           {/* Phase 6 - RunaData */}
           <Route path="/governance" element={<ProtectedRoute><GovernancePage /></ProtectedRoute>} />
           
+          {/* Phase 7 - Observability */}
+          <Route path="/observability" element={<ProtectedRoute><ObservabilityPage /></ProtectedRoute>} />
+          
           {/* Placeholder routes */}
           <Route path="/insights" element={<ProtectedRoute>
             <div className="text-center py-12">
