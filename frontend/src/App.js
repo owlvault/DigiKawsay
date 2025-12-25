@@ -31,6 +31,9 @@ import { RitualsPage } from "./pages/RitualsPage";
 // Phase 6 - RunaData
 import { GovernancePage } from "./pages/GovernancePage";
 
+// Phase 7 - Observability
+import { ObservabilityPage } from "./pages/ObservabilityPage";
+
 // Components
 import { Layout } from "./components/Layout";
 
