@@ -77,6 +77,8 @@ export const Layout = ({ children }) => {
     { to: '/rituals', icon: Calendar, label: 'Rituales', roles: ['admin', 'facilitator'] },
     // Phase 6 - RunaData
     { to: '/governance', icon: Shield, label: 'RunaData', roles: ['admin', 'data_steward', 'security_officer'] },
+    // Phase 7 - Observability
+    { to: '/observability', icon: Activity, label: 'Monitoreo', roles: ['admin', 'security_officer'] },
   ];
 
   const filteredNavItems = navItems.filter(item => 
