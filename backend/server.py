@@ -4697,11 +4697,20 @@ api_router.include_router(network_router)
 api_router.include_router(initiative_router)
 api_router.include_router(ritual_router)
 api_router.include_router(governance_router)
+api_router.include_router(observability_router)
 
 app.include_router(api_router)
 
+# Add Observability Middleware
+app.add_middleware(ObservabilityMiddleware)
+
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','), allow_methods=["*"], allow_headers=["*"])
+
+@app.on_event("startup")
+async def startup_event():
+    structured_logger.info("DigiKawsay API started", version="0.7.0")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    structured_logger.info("DigiKawsay API shutting down")
     client.close()
