@@ -1,11 +1,16 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Query, BackgroundTasks, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, Query, BackgroundTasks, Request, Response
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import json
 import re
+import time
+import sys
+import psutil
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict, Any, Tuple
@@ -17,9 +22,10 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 import asyncio
 import hashlib
 from functools import wraps
-from collections import defaultdict
+from collections import defaultdict, deque
 import networkx as nx
 from community import community_louvain
+from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
