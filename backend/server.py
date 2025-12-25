@@ -64,6 +64,7 @@ reidentification_router = APIRouter(prefix="/reidentification", tags=["Reidentif
 network_router = APIRouter(prefix="/network", tags=["RunaMap - Network Analysis"])
 initiative_router = APIRouter(prefix="/initiatives", tags=["RunaFlow - Initiatives"])
 ritual_router = APIRouter(prefix="/rituals", tags=["RunaFlow - Rituals"])
+governance_router = APIRouter(prefix="/governance", tags=["RunaData - Governance"])
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
