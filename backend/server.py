@@ -3370,7 +3370,7 @@ async def create_dual_approval_request(
     current_user: dict = Depends(get_current_user)
 ):
     """Create a dual approval request for sensitive operations"""
-    tenant_id = current_user.get("tenant_id", "default")
+    tenant_id = current_user.get("tenant_id") or "default"
     
     request = DualApprovalRequest(
         tenant_id=tenant_id,
