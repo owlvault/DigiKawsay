@@ -87,6 +87,9 @@ function App() {
           {/* Phase 7 - Observability */}
           <Route path="/observability" element={<ProtectedRoute><ObservabilityPage /></ProtectedRoute>} />
           
+          {/* Phase 8 - User Administration */}
+          <Route path="/users" element={<ProtectedRoute><UsersAdminPage /></ProtectedRoute>} />
+          
           {/* Placeholder routes */}
           <Route path="/insights" element={<ProtectedRoute>
             <div className="text-center py-12">
