@@ -240,6 +240,8 @@ class AuditAction:
     DATA_DELETED = "data_deleted"
     LOGIN = "login"
     LOGOUT = "logout"
+    SECURITY_ACTION = "security_action"
+    ACCOUNT_UNLOCK = "account_unlock"
 
 class AuditLog(TimestampMixin):
     model_config = ConfigDict(extra="ignore")
