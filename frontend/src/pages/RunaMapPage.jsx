@@ -110,11 +110,28 @@ export const RunaMapPage = () => {
   const applyD3ForceLayout = useCallback((rawNodes, rawEdges) => {
     if (rawNodes.length === 0) return { nodes: [], edges: [] };
 
-    const simulation = forceSimulation(rawNodes)
-      .force('link', forceLink(rawEdges)
+    // Store original source/target IDs before D3 mutates them
+    const edgeSourceTargetMap = new Map();
+    rawEdges.forEach(edge => {
+      edgeSourceTargetMap.set(edge.id, {
+        source: edge.source || edge.source_node_id,
+        target: edge.target || edge.target_node_id
+      });
+    });
+
+    // Create copies for D3 to avoid mutating original data
+    const nodesCopy = rawNodes.map(n => ({ ...n }));
+    const edgesCopy = rawEdges.map(e => ({ 
+      ...e,
+      source: e.source || e.source_node_id,
+      target: e.target || e.target_node_id
+    }));
+
+    const simulation = forceSimulation(nodesCopy)
+      .force('link', forceLink(edgesCopy)
         .id(d => d.id)
         .distance(150)
-        .strength(d => Math.min(1, d.weight / 5))
+        .strength(d => Math.min(1, (d.weight || 1) / 5))
       )
       .force('charge', forceManyBody().strength(-300))
       .force('center', forceCenter(400, 300))
@@ -125,7 +142,7 @@ export const RunaMapPage = () => {
     for (let i = 0; i < 300; i++) simulation.tick();
 
     // Convert to React Flow format
-    const flowNodes = rawNodes.map(node => ({
+    const flowNodes = nodesCopy.map(node => ({
       id: node.id,
       type: 'custom',
       position: { x: node.x || 0, y: node.y || 0 },
@@ -140,23 +157,27 @@ export const RunaMapPage = () => {
       },
     }));
 
-    const flowEdges = rawEdges.map(edge => ({
-      id: edge.id,
-      source: edge.source_node_id || edge.source?.id || edge.source,
-      target: edge.target_node_id || edge.target?.id || edge.target,
-      type: 'default',
-      animated: edge.edge_type === 'comparte_tema',
-      style: {
-        stroke: EDGE_COLORS[edge.edge_type] || '#94a3b8',
-        strokeWidth: Math.min(5, Math.max(1, edge.weight)),
-      },
-      markerEnd: edge.edge_type === 'habla_de' ? {
-        type: MarkerType.ArrowClosed,
-        color: EDGE_COLORS[edge.edge_type],
-      } : undefined,
-      label: edge.weight > 1 ? String(edge.weight) : undefined,
-      labelStyle: { fontSize: 10 },
-    }));
+    // Use the stored original IDs for edges
+    const flowEdges = rawEdges.map(edge => {
+      const originalIds = edgeSourceTargetMap.get(edge.id);
+      return {
+        id: edge.id,
+        source: originalIds.source,
+        target: originalIds.target,
+        type: 'default',
+        animated: edge.edge_type === 'comparte_tema',
+        style: {
+          stroke: EDGE_COLORS[edge.edge_type] || '#94a3b8',
+          strokeWidth: Math.min(5, Math.max(1, edge.weight || 1)),
+        },
+        markerEnd: edge.edge_type === 'habla_de' ? {
+          type: MarkerType.ArrowClosed,
+          color: EDGE_COLORS[edge.edge_type],
+        } : undefined,
+        label: (edge.weight || 1) > 1 ? String(edge.weight) : undefined,
+        labelStyle: { fontSize: 10 },
+      };
+    });
 
     return { nodes: flowNodes, edges: flowEdges };
   }, []);
