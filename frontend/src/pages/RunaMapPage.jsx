@@ -47,14 +47,14 @@ const EDGE_COLORS = {
   colabora: '#ec4899',
 };
 
-// Custom Node Component
+// Custom Node Component with Handles for edge connections
 const CustomNode = ({ data }) => {
   const colors = NODE_COLORS[data.nodeType] || NODE_COLORS.category;
   const size = Math.max(40, Math.min(80, 40 + (data.degree || 0) * 5));
   
   return (
     <div
-      className="flex items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 cursor-pointer"
+      className="relative flex items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 cursor-pointer"
       style={{
         width: size,
         height: size,
@@ -64,6 +64,29 @@ const CustomNode = ({ data }) => {
       }}
       title={`${data.label}\nTipo: ${data.nodeType}\nBetweenness: ${data.betweenness?.toFixed(3) || 0}`}
     >
+      {/* Connection handles - invisible but functional */}
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        style={{ background: 'transparent', border: 'none', width: 10, height: 10 }} 
+      />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        style={{ background: 'transparent', border: 'none', width: 10, height: 10 }} 
+      />
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        id="left"
+        style={{ background: 'transparent', border: 'none', width: 10, height: 10 }} 
+      />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        id="right"
+        style={{ background: 'transparent', border: 'none', width: 10, height: 10 }} 
+      />
       <span className="text-xs font-medium text-center px-1 truncate max-w-full">
         {data.label?.slice(0, 8)}
       </span>
