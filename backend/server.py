@@ -55,7 +55,27 @@ PII_VAULT_ENCRYPTION_KEY = os.environ.get('PII_VAULT_KEY', 'default_vault_key_ch
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
-app = FastAPI(title="DigiKawsay API", version="0.7.0")
+app = FastAPI(
+    title="DigiKawsay API", 
+    version="0.8.0",
+    description="Plataforma de Facilitación Conversacional con VAL - Producción",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
+)
+
+# Add Rate Limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security Configuration
+SESSION_TIMEOUT_MINUTES = 30
+PASSWORD_MIN_LENGTH = 8
+MAX_LOGIN_ATTEMPTS = 5
+LOGIN_LOCKOUT_MINUTES = 15
+
+# Track failed login attempts
+failed_login_attempts: Dict[str, Dict] = {}
 
 # Routers
 api_router = APIRouter(prefix="/api")
