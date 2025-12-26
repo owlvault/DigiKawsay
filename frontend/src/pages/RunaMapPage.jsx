@@ -207,21 +207,6 @@ export const RunaMapPage = () => {
       };
     });
 
-    console.log('=== Final Flow Data ===');
-    console.log('Flow nodes:', flowNodes.length);
-    console.log('Flow edges:', flowEdges.length);
-    if (flowEdges.length > 0) {
-      console.log('Sample flow edge:', JSON.stringify(flowEdges[0]));
-      const nodeIds = new Set(flowNodes.map(n => n.id));
-      flowEdges.forEach((e, i) => {
-        const srcExists = nodeIds.has(e.source);
-        const tgtExists = nodeIds.has(e.target);
-        if (!srcExists || !tgtExists) {
-          console.log(`Edge ${i} PROBLEM: src=${e.source?.slice(0,8)}(${srcExists}), tgt=${e.target?.slice(0,8)}(${tgtExists})`);
-        }
-      });
-    }
-
     return { nodes: flowNodes, edges: flowEdges };
   }, []);
 
