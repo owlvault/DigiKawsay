@@ -3579,6 +3579,16 @@ async def generate_network(
     # Calculate metrics
     metrics = network_analysis_service.calculate_metrics(nodes, edges)
     
+    # Transform edges for React Flow compatibility (source/target instead of source_node_id/target_node_id)
+    transformed_edges = []
+    for edge in edges:
+        transformed_edge = {
+            **edge,
+            "source": edge.get("source_node_id"),
+            "target": edge.get("target_node_id")
+        }
+        transformed_edges.append(transformed_edge)
+    
     # Save snapshot if name provided
     snapshot_id = None
     if request_data.snapshot_name:
@@ -3594,7 +3604,7 @@ async def generate_network(
     
     return GraphResponse(
         nodes=nodes,
-        edges=edges,
+        edges=transformed_edges,
         metrics=NetworkMetrics(**metrics),
         snapshot_id=snapshot_id
     )
