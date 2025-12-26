@@ -2636,6 +2636,33 @@ async def validate_session_timeout(token_data: dict) -> bool:
     return True
 
 # Login attempt tracking
+async def check_login_lockout_db(email: str) -> bool:
+    """Check if user is locked out due to failed attempts (DB-based for persistence)"""
+    # First check in-memory cache
+    if email in failed_login_attempts:
+        attempts = failed_login_attempts[email]
+        if attempts["count"] >= MAX_LOGIN_ATTEMPTS:
+            lockout_until = attempts["last_attempt"] + timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+            if datetime.now(timezone.utc) < lockout_until:
+                return True
+            else:
+                # Reset after lockout period
+                del failed_login_attempts[email]
+                return False
+    
+    # Also check DB for persistence across restarts
+    cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+    recent_attempts = await db.login_attempts.count_documents({
+        "email": email,
+        "success": False,
+        "timestamp": {"$gte": cutoff_time.isoformat()}
+    })
+    
+    if recent_attempts >= MAX_LOGIN_ATTEMPTS:
+        return True
+    
+    return False
+
 def check_login_lockout(email: str) -> bool:
     """Check if user is locked out due to failed attempts"""
     if email in failed_login_attempts:
@@ -2649,12 +2676,44 @@ def check_login_lockout(email: str) -> bool:
                 del failed_login_attempts[email]
     return False
 
+async def record_failed_login_db(email: str, ip_address: str = None):
+    """Record a failed login attempt in memory and DB"""
+    # In-memory tracking
+    if email not in failed_login_attempts:
+        failed_login_attempts[email] = {"count": 0, "last_attempt": None}
+    failed_login_attempts[email]["count"] += 1
+    failed_login_attempts[email]["last_attempt"] = datetime.now(timezone.utc)
+    
+    # Persist to DB
+    await db.login_attempts.insert_one({
+        "id": str(uuid.uuid4()),
+        "email": email,
+        "ip_address": ip_address,
+        "success": False,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+
 def record_failed_login(email: str):
     """Record a failed login attempt"""
     if email not in failed_login_attempts:
         failed_login_attempts[email] = {"count": 0, "last_attempt": None}
     failed_login_attempts[email]["count"] += 1
     failed_login_attempts[email]["last_attempt"] = datetime.now(timezone.utc)
+
+async def record_successful_login_db(email: str, ip_address: str = None):
+    """Record a successful login and clear failed attempts"""
+    # Clear in-memory
+    if email in failed_login_attempts:
+        del failed_login_attempts[email]
+    
+    # Record success in DB
+    await db.login_attempts.insert_one({
+        "id": str(uuid.uuid4()),
+        "email": email,
+        "ip_address": ip_address,
+        "success": True,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
 
 def clear_failed_logins(email: str):
     """Clear failed login attempts on successful login"""
