@@ -249,28 +249,30 @@ class SecurityTester:
         
         return success
 
-    def test_endpoint_metrics(self) -> bool:
-        """Test endpoint metrics"""
+    def test_locked_accounts_endpoint(self) -> bool:
+        """Test GET /api/auth/security/locked-accounts endpoint"""
         success, response = self.run_test(
-            "Endpoint Metrics",
+            "Locked Accounts",
             "GET",
-            "observability/metrics/endpoints",
+            "auth/security/locked-accounts",
             200
         )
         
         if success:
             if isinstance(response, list):
-                print(f"   ✅ Found {len(response)} endpoint metrics")
+                print(f"   ✅ Found {len(response)} locked accounts")
                 if response:
-                    # Check first endpoint structure
-                    first_endpoint = response[0]
-                    expected_keys = ['endpoint', 'method', 'request_count', 'error_count', 'avg_latency_ms', 'p95_latency_ms', 'p99_latency_ms']
-                    missing_keys = [key for key in expected_keys if key not in first_endpoint]
+                    # Check first locked account structure
+                    first_account = response[0]
+                    expected_keys = ['email', 'locked_at', 'failed_attempts']
+                    missing_keys = [key for key in expected_keys if key not in first_account]
                     if missing_keys:
-                        print(f"   ⚠️  Missing keys in endpoint metrics: {missing_keys}")
+                        print(f"   ⚠️  Missing keys in locked account: {missing_keys}")
                     else:
-                        print(f"   ✅ Sample endpoint: {first_endpoint.get('method')} {first_endpoint.get('endpoint')}")
-                        print(f"   ✅ Requests: {first_endpoint.get('request_count')}, Errors: {first_endpoint.get('error_count')}")
+                        print(f"   ✅ Sample locked account: {first_account.get('email')}")
+                        print(f"   ✅ Failed attempts: {first_account.get('failed_attempts')}")
+                else:
+                    print(f"   ✅ No locked accounts currently")
             else:
                 print(f"   ⚠️  Expected list, got: {type(response)}")
         
