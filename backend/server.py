@@ -1142,17 +1142,53 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+    session_expired_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sesión expirada por inactividad")
+    
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
+        
+        # Check token expiration timestamp
+        exp = payload.get("exp")
+        if exp:
+            exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+            if datetime.now(timezone.utc) > exp_datetime:
+                raise session_expired_exception
+                
     except JWTError:
         raise credentials_exception
+    
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if user is None:
         raise credentials_exception
+    
+    # Check user is still active
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Cuenta desactivada")
+    
+    # Check session timeout based on last activity
+    last_activity = user.get("last_activity")
+    if last_activity:
+        try:
+            if isinstance(last_activity, str):
+                last_time = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+            else:
+                last_time = last_activity.replace(tzinfo=timezone.utc) if last_activity.tzinfo is None else last_activity
+            
+            if datetime.now(timezone.utc) - last_time > timedelta(minutes=SESSION_TIMEOUT_MINUTES):
+                raise session_expired_exception
+        except (ValueError, AttributeError):
+            pass  # If we can't parse, continue
+    
+    # Update last activity timestamp
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"last_activity": datetime.now(timezone.utc).isoformat()}}
+    )
+    
     return user
 
 def generate_pseudonym() -> str:
