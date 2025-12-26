@@ -2944,7 +2944,7 @@ async def unlock_account(email: str, request: Request, current_user: dict = Depe
     await audit_service.log(
         user_id=current_user["id"],
         user_role=current_user["role"],
-        action=AuditAction.UPDATE,
+        action=AuditAction.ACCOUNT_UNLOCK,
         resource_type="security",
         resource_id=email,
         details={"action": "unlock_account", "unlocked_email": email},
