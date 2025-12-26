@@ -4875,7 +4875,85 @@ app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.envi
 
 @app.on_event("startup")
 async def startup_event():
-    structured_logger.info("DigiKawsay API started", version="0.7.0")
+    structured_logger.info("DigiKawsay API started", version="0.8.0")
+    
+    # Create MongoDB indexes for performance optimization
+    try:
+        # Users collection
+        await db.users.create_index("email", unique=True)
+        await db.users.create_index("tenant_id")
+        await db.users.create_index("role")
+        await db.users.create_index([("email", 1), ("is_active", 1)])
+        
+        # Sessions collection
+        await db.sessions.create_index("participant_id")
+        await db.sessions.create_index("campaign_id")
+        await db.sessions.create_index("status")
+        await db.sessions.create_index([("campaign_id", 1), ("status", 1)])
+        await db.sessions.create_index("created_at")
+        
+        # Campaigns collection
+        await db.campaigns.create_index("tenant_id")
+        await db.campaigns.create_index("status")
+        await db.campaigns.create_index([("tenant_id", 1), ("status", 1)])
+        
+        # Insights collection
+        await db.insights.create_index("campaign_id")
+        await db.insights.create_index("tenant_id")
+        await db.insights.create_index("category")
+        await db.insights.create_index("status")
+        await db.insights.create_index([("campaign_id", 1), ("status", 1)])
+        
+        # Audit logs collection - critical for compliance
+        await db.audit_logs.create_index("user_id")
+        await db.audit_logs.create_index("action")
+        await db.audit_logs.create_index("resource_type")
+        await db.audit_logs.create_index("tenant_id")
+        await db.audit_logs.create_index("timestamp")
+        await db.audit_logs.create_index([("tenant_id", 1), ("timestamp", -1)])
+        await db.audit_logs.create_index([("user_id", 1), ("action", 1)])
+        
+        # PII Vault collection
+        await db.pii_vault.create_index("pseudonym", unique=True)
+        await db.pii_vault.create_index("tenant_id")
+        
+        # Consent policies
+        await db.consent_policies.create_index("tenant_id")
+        await db.consent_policies.create_index([("tenant_id", 1), ("is_active", 1)])
+        
+        # Scripts collection
+        await db.scripts.create_index("campaign_id")
+        await db.scripts.create_index([("campaign_id", 1), ("version", -1)])
+        
+        # Network snapshots
+        await db.network_snapshots.create_index("campaign_id")
+        await db.network_snapshots.create_index("created_at")
+        
+        # Initiatives
+        await db.initiatives.create_index("campaign_id")
+        await db.initiatives.create_index("status")
+        await db.initiatives.create_index([("campaign_id", 1), ("priority_score", -1)])
+        
+        # Rituals
+        await db.rituals.create_index("campaign_id")
+        await db.rituals.create_index("status")
+        
+        # Access policies
+        await db.access_policies.create_index("tenant_id")
+        await db.access_policies.create_index([("tenant_id", 1), ("is_active", 1)])
+        
+        # Login attempts tracking (persistent)
+        await db.login_attempts.create_index("email")
+        await db.login_attempts.create_index("ip_address")
+        await db.login_attempts.create_index("timestamp")
+        await db.login_attempts.create_index([("email", 1), ("timestamp", -1)])
+        
+        # TTL index for auto-cleanup of old login attempts (30 days)
+        await db.login_attempts.create_index("timestamp", expireAfterSeconds=2592000)
+        
+        structured_logger.info("MongoDB indexes created successfully")
+    except Exception as e:
+        structured_logger.error(f"Error creating MongoDB indexes: {str(e)}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
