@@ -385,48 +385,45 @@ class SecurityTester:
         return success
 
 def main():
-    print("🚀 DigiKawsay Phase 7 - Observability Backend Testing")
+    print("🚀 DigiKawsay Phase 8 - Hardening Security Backend Testing")
     print("=" * 60)
     
-    tester = ObservabilityTester()
+    tester = SecurityTester()
     
     # Test login first
     if not tester.test_login("admin@test.com", "test123"):
-        print("❌ Login failed, stopping tests")
+        print("❌ Admin login failed, stopping tests")
         return 1
 
-    print(f"\n📊 Testing Observability APIs...")
+    print(f"\n🔒 Testing Security Features...")
     print("-" * 40)
 
-    # Test all observability endpoints
+    # Test all security features
     test_results = []
     
-    # Health check (no auth required)
-    test_results.append(tester.test_health_check())
+    # Rate limiting test
+    test_results.append(tester.test_rate_limiting_login())
     
-    # System metrics
-    test_results.append(tester.test_system_metrics())
+    # Wait a bit to avoid rate limiting for subsequent tests
+    print(f"\n⏳ Waiting 10 seconds to avoid rate limiting...")
+    time.sleep(10)
     
-    # Business metrics
-    test_results.append(tester.test_business_metrics())
+    # Brute force protection test
+    test_results.append(tester.test_brute_force_protection())
     
-    # Endpoint metrics
-    test_results.append(tester.test_endpoint_metrics())
+    # Security management endpoints
+    test_results.append(tester.test_security_config_endpoint())
+    test_results.append(tester.test_locked_accounts_endpoint())
+    test_results.append(tester.test_unlock_account_endpoint())
     
-    # Logs API
-    test_results.append(tester.test_logs_api())
+    # Session timeout test
+    test_results.append(tester.test_session_timeout())
     
-    # Alerts API
-    test_results.append(tester.test_alerts_api())
-    
-    # Dashboard API (comprehensive)
-    test_results.append(tester.test_dashboard_api())
-    
-    # Prometheus metrics
-    test_results.append(tester.test_prometheus_metrics())
+    # Valid login test
+    test_results.append(tester.test_valid_login())
 
     # Print final results
-    print(f"\n📈 Test Results Summary")
+    print(f"\n📈 Security Test Results Summary")
     print("=" * 40)
     print(f"Tests run: {tester.tests_run}")
     print(f"Tests passed: {tester.tests_passed}")
