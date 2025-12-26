@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-DigiKawsay Phase 7 - Observability Backend Testing
-Tests all observability endpoints including health, metrics, logs, and alerts
+DigiKawsay Phase 8 - Hardening Security Backend Testing
+Tests all security features including rate limiting, brute force protection, and security management endpoints
 """
 
 import requests
 import sys
 import json
+import time
 from datetime import datetime
 from typing import Dict, Any
 
-class ObservabilityTester:
+class SecurityTester:
     def __init__(self, base_url="https://runaflow.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
