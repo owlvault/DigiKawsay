@@ -110,13 +110,20 @@ export const RunaMapPage = () => {
   const applyD3ForceLayout = useCallback((rawNodes, rawEdges) => {
     if (rawNodes.length === 0) return { nodes: [], edges: [] };
 
+    console.log('=== D3 Force Layout Debug ===');
+    console.log('Raw nodes:', rawNodes.length);
+    console.log('Raw edges:', rawEdges.length);
+    if (rawEdges.length > 0) {
+      console.log('First edge:', JSON.stringify(rawEdges[0]));
+    }
+
     // Store original source/target IDs before D3 mutates them
     const edgeSourceTargetMap = new Map();
     rawEdges.forEach(edge => {
-      edgeSourceTargetMap.set(edge.id, {
-        source: edge.source || edge.source_node_id,
-        target: edge.target || edge.target_node_id
-      });
+      const sourceId = edge.source || edge.source_node_id;
+      const targetId = edge.target || edge.target_node_id;
+      edgeSourceTargetMap.set(edge.id, { source: sourceId, target: targetId });
+      console.log(`Edge ${edge.id.slice(0,8)}: source=${sourceId?.slice(0,8)}, target=${targetId?.slice(0,8)}`);
     });
 
     // Create copies for D3 to avoid mutating original data
