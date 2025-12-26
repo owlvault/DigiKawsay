@@ -162,12 +162,12 @@ export const RunaMapPage = () => {
     const simulation = forceSimulation(nodesCopy)
       .force('link', forceLink(edgesCopy)
         .id(d => d.id)
-        .distance(150)
-        .strength(d => Math.min(1, (d.weight || 1) / 5))
+        .distance(100)
+        .strength(0.5)
       )
-      .force('charge', forceManyBody().strength(-300))
-      .force('center', forceCenter(400, 300))
-      .force('collision', forceCollide().radius(60))
+      .force('charge', forceManyBody().strength(-150))
+      .force('center', forceCenter(600, 400))
+      .force('collision', forceCollide().radius(50))
       .stop();
 
     // Run simulation
