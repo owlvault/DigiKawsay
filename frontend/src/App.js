@@ -34,6 +34,9 @@ import { GovernancePage } from "./pages/GovernancePage";
 // Phase 7 - Observability
 import { ObservabilityPage } from "./pages/ObservabilityPage";
 
+// Phase 8 - User Administration
+import { UsersAdminPage } from "./pages/UsersAdminPage";
+
 // Components
 import { Layout } from "./components/Layout";
 
