@@ -2737,16 +2737,48 @@ async def register(user_data: UserCreate):
     return TokenResponse(access_token=access_token, user=UserResponse(**{k: v for k, v in user_obj.model_dump().items() if k in UserResponse.model_fields}))
 
 @auth_router.post("/login", response_model=TokenResponse)
+@limiter.limit("10/minute")
 async def login(credentials: UserLogin, request: Request):
+    # Check for lockout
+    if check_login_lockout(credentials.email):
+        structured_logger.warning(
+            f"Login attempt blocked - account locked",
+            email=PIISanitizer.sanitize(credentials.email),
+            ip=request.client.host if request.client else None
+        )
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Cuenta bloqueada por {LOGIN_LOCKOUT_MINUTES} minutos debido a múltiples intentos fallidos"
+        )
+    
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
+        record_failed_login(credentials.email)
+        structured_logger.warning(
+            f"Failed login attempt",
+            email=PIISanitizer.sanitize(credentials.email),
+            ip=request.client.host if request.client else None
+        )
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    
+    # Check if user is active
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Cuenta desactivada")
+    
+    # Clear failed attempts on success
+    clear_failed_logins(credentials.email)
     
     # Audit login
     await audit_service.log(
         user_id=user["id"], user_role=user["role"], action=AuditAction.LOGIN,
         resource_type="session", tenant_id=user.get("tenant_id"),
         ip_address=request.client.host if request.client else None
+    )
+    
+    # Update last login
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}}
     )
     
     access_token = create_access_token(data={"sub": user["id"]})
