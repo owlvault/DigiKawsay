@@ -278,29 +278,21 @@ class SecurityTester:
         
         return success
 
-    def test_logs_api(self) -> bool:
-        """Test logs API"""
+    def test_unlock_account_endpoint(self) -> bool:
+        """Test POST /api/auth/security/unlock-account/{email} endpoint"""
+        test_email = "bruteforce@test.com"
+        
         success, response = self.run_test(
-            "Logs API",
-            "GET",
-            "observability/logs?limit=10",
+            "Unlock Account",
+            "POST",
+            f"auth/security/unlock-account/{test_email}",
             200
         )
         
         if success:
-            if isinstance(response, list):
-                print(f"   ✅ Found {len(response)} log entries")
-                if response:
-                    # Check first log structure
-                    first_log = response[0]
-                    expected_keys = ['timestamp', 'level', 'message']
-                    missing_keys = [key for key in expected_keys if key not in first_log]
-                    if missing_keys:
-                        print(f"   ⚠️  Missing keys in log entry: {missing_keys}")
-                    else:
-                        print(f"   ✅ Sample log: [{first_log.get('level')}] {first_log.get('message')[:50]}...")
-            else:
-                print(f"   ⚠️  Expected list, got: {type(response)}")
+            print(f"   ✅ Account unlock successful")
+            if 'message' in response:
+                print(f"   ✅ Message: {response.get('message')}")
         
         return success
 
