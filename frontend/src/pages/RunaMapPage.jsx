@@ -196,18 +196,22 @@ export const RunaMapPage = () => {
         id: edge.id,
         source: originalIds.source,
         target: originalIds.target,
-        type: 'default',
+        type: 'smoothstep',
         animated: edge.edge_type === 'comparte_tema',
         style: {
-          stroke: EDGE_COLORS[edge.edge_type] || '#94a3b8',
-          strokeWidth: Math.min(5, Math.max(1, edge.weight || 1)),
+          stroke: EDGE_COLORS[edge.edge_type] || '#64748b',
+          strokeWidth: Math.max(2, Math.min(6, (edge.weight || 1) * 2)),
+          opacity: 0.8,
         },
-        markerEnd: edge.edge_type === 'habla_de' ? {
+        markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: EDGE_COLORS[edge.edge_type],
-        } : undefined,
-        label: (edge.weight || 1) > 1 ? String(edge.weight) : undefined,
-        labelStyle: { fontSize: 10 },
+          color: EDGE_COLORS[edge.edge_type] || '#64748b',
+          width: 15,
+          height: 15,
+        },
+        label: (edge.weight || 1) > 1 ? String(Math.round(edge.weight)) : undefined,
+        labelStyle: { fontSize: 10, fontWeight: 'bold' },
+        labelBgStyle: { fill: 'white', fillOpacity: 0.8 },
       };
     });
 
