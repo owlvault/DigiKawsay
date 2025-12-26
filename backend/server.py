@@ -2834,12 +2834,14 @@ async def register(user_data: UserCreate):
 @auth_router.post("/login", response_model=TokenResponse)
 @limiter.limit("10/minute")
 async def login(credentials: UserLogin, request: Request):
-    # Check for lockout
-    if check_login_lockout(credentials.email):
+    ip_address = request.client.host if request.client else None
+    
+    # Check for lockout (both in-memory and DB)
+    if check_login_lockout(credentials.email) or await check_login_lockout_db(credentials.email):
         structured_logger.warning(
             f"Login attempt blocked - account locked",
             email=PIISanitizer.sanitize(credentials.email),
-            ip=request.client.host if request.client else None
+            ip=ip_address
         )
         raise HTTPException(
             status_code=429, 
@@ -2848,11 +2850,11 @@ async def login(credentials: UserLogin, request: Request):
     
     user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
     if not user or not verify_password(credentials.password, user.get("hashed_password", "")):
-        record_failed_login(credentials.email)
+        await record_failed_login_db(credentials.email, ip_address)
         structured_logger.warning(
             f"Failed login attempt",
             email=PIISanitizer.sanitize(credentials.email),
-            ip=request.client.host if request.client else None
+            ip=ip_address
         )
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
     
@@ -2860,20 +2862,23 @@ async def login(credentials: UserLogin, request: Request):
     if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Cuenta desactivada")
     
-    # Clear failed attempts on success
-    clear_failed_logins(credentials.email)
+    # Clear failed attempts on success and record successful login
+    await record_successful_login_db(credentials.email, ip_address)
     
     # Audit login
     await audit_service.log(
         user_id=user["id"], user_role=user["role"], action=AuditAction.LOGIN,
         resource_type="session", tenant_id=user.get("tenant_id"),
-        ip_address=request.client.host if request.client else None
+        ip_address=ip_address
     )
     
-    # Update last login
+    # Update last login and last activity
     await db.users.update_one(
         {"id": user["id"]},
-        {"$set": {"last_login": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {
+            "last_login": datetime.now(timezone.utc).isoformat(),
+            "last_activity": datetime.now(timezone.utc).isoformat()
+        }}
     )
     
     access_token = create_access_token(data={"sub": user["id"]})
