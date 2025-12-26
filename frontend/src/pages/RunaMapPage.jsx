@@ -7,6 +7,8 @@ import ReactFlow, {
   useEdgesState,
   MarkerType,
   Panel,
+  Handle,
+  Position,
 } from 'reactflow';
 import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force';
 import 'reactflow/dist/style.css';
