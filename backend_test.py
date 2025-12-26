@@ -133,28 +133,98 @@ class SecurityTester:
             })
             return False
 
-    def test_system_metrics(self) -> bool:
-        """Test system metrics endpoint"""
-        success, response = self.run_test(
-            "System Metrics",
-            "GET",
-            "observability/metrics/system",
-            200
-        )
+    def test_brute_force_protection(self) -> bool:
+        """Test brute force protection - 5 failed logins locks account for 15 minutes"""
+        print(f"\n🔍 Testing Brute Force Protection...")
         
-        if success:
-            # Validate system metrics structure
-            expected_keys = ['cpu_percent', 'memory_percent', 'memory_used_mb', 'disk_percent', 'active_connections', 'uptime_seconds']
-            missing_keys = [key for key in expected_keys if key not in response]
-            if missing_keys:
-                print(f"   ⚠️  Missing keys in system metrics: {missing_keys}")
+        test_email = "bruteforce@test.com"
+        
+        # First, try to register a test user (might fail if exists, that's ok)
+        try:
+            self.run_test(
+                "Register Test User",
+                "POST", 
+                "auth/register",
+                201,
+                data={
+                    "email": test_email,
+                    "password": "correctpassword",
+                    "full_name": "Brute Force Test",
+                    "role": "participant"
+                },
+                auth_required=False
+            )
+        except:
+            pass  # User might already exist
+        
+        # Make 5 failed login attempts
+        failed_attempts = 0
+        for i in range(5):
+            try:
+                url = f"{self.base_url}/api/auth/login"
+                response = requests.post(
+                    url,
+                    json={"email": test_email, "password": "wrongpassword"},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=5
+                )
+                
+                if response.status_code in [401, 403]:
+                    failed_attempts += 1
+                    print(f"   Failed attempt {failed_attempts}/5")
+                    time.sleep(0.5)  # Small delay between attempts
+                    
+            except Exception as e:
+                print(f"   ❌ Error during failed attempt {i+1}: {str(e)}")
+                return False
+        
+        # Now try the 6th attempt - should be locked
+        try:
+            url = f"{self.base_url}/api/auth/login"
+            response = requests.post(
+                url,
+                json={"email": test_email, "password": "correctpassword"},
+                headers={'Content-Type': 'application/json'},
+                timeout=5
+            )
+            
+            if response.status_code == 423:  # Locked
+                print(f"   ✅ Account locked after 5 failed attempts")
+                print(f"   ✅ Status: {response.status_code}")
+                self.tests_passed += 1
+                return True
+            elif response.status_code == 401:
+                print(f"   ⚠️  Account not locked, got 401 instead of 423")
+                # Check response message for lock indication
+                try:
+                    resp_data = response.json()
+                    if "bloqueada" in resp_data.get("detail", "").lower() or "locked" in resp_data.get("detail", "").lower():
+                        print(f"   ✅ Account locked (indicated in message)")
+                        self.tests_passed += 1
+                        return True
+                except:
+                    pass
+                
+                self.failed_tests.append({
+                    'name': 'Brute Force Protection',
+                    'error': f'Expected 423 or lock message, got {response.status_code}'
+                })
+                return False
             else:
-                print(f"   ✅ CPU: {response.get('cpu_percent', 0):.1f}%")
-                print(f"   ✅ Memory: {response.get('memory_percent', 0):.1f}%")
-                print(f"   ✅ Disk: {response.get('disk_percent', 0):.1f}%")
-                print(f"   ✅ Connections: {response.get('active_connections', 0)}")
-        
-        return success
+                print(f"   ❌ Unexpected response: {response.status_code}")
+                self.failed_tests.append({
+                    'name': 'Brute Force Protection',
+                    'error': f'Unexpected status {response.status_code}'
+                })
+                return False
+                
+        except Exception as e:
+            print(f"   ❌ Error testing account lock: {str(e)}")
+            self.failed_tests.append({
+                'name': 'Brute Force Protection',
+                'error': str(e)
+            })
+            return False
 
     def test_business_metrics(self) -> bool:
         """Test business metrics endpoint"""
