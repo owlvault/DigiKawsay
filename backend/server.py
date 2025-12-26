@@ -3639,9 +3639,19 @@ async def get_campaign_network(
     
     metrics = network_analysis_service.calculate_metrics(nodes, edges)
     
+    # Transform edges for React Flow compatibility
+    transformed_edges = []
+    for edge in edges:
+        transformed_edge = {
+            **edge,
+            "source": edge.get("source_node_id"),
+            "target": edge.get("target_node_id")
+        }
+        transformed_edges.append(transformed_edge)
+    
     return GraphResponse(
         nodes=nodes,
-        edges=edges,
+        edges=transformed_edges,
         metrics=NetworkMetrics(**metrics)
     )
 
