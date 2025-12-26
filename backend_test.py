@@ -226,26 +226,26 @@ class SecurityTester:
             })
             return False
 
-    def test_business_metrics(self) -> bool:
-        """Test business metrics endpoint"""
+    def test_security_config_endpoint(self) -> bool:
+        """Test GET /api/auth/security/config endpoint"""
         success, response = self.run_test(
-            "Business Metrics",
+            "Security Config",
             "GET",
-            "observability/metrics/business",
+            "auth/security/config",
             200
         )
         
         if success:
-            # Validate business metrics structure
-            expected_keys = ['total_users', 'active_sessions', 'total_campaigns', 'total_insights', 'messages_today', 'insights_generated_today']
+            # Validate security config structure
+            expected_keys = ['session_timeout_minutes', 'max_login_attempts', 'login_lockout_minutes', 'password_min_length']
             missing_keys = [key for key in expected_keys if key not in response]
             if missing_keys:
-                print(f"   ⚠️  Missing keys in business metrics: {missing_keys}")
+                print(f"   ⚠️  Missing keys in security config: {missing_keys}")
             else:
-                print(f"   ✅ Users: {response.get('total_users', 0)}")
-                print(f"   ✅ Campaigns: {response.get('total_campaigns', 0)}")
-                print(f"   ✅ Insights: {response.get('total_insights', 0)}")
-                print(f"   ✅ Messages today: {response.get('messages_today', 0)}")
+                print(f"   ✅ Session timeout: {response.get('session_timeout_minutes')} minutes")
+                print(f"   ✅ Max login attempts: {response.get('max_login_attempts')}")
+                print(f"   ✅ Lockout duration: {response.get('login_lockout_minutes')} minutes")
+                print(f"   ✅ Password min length: {response.get('password_min_length')}")
         
         return success
 
