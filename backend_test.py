@@ -343,28 +343,28 @@ class SecurityTester:
             print(f"   ❌ Error testing fresh token: {str(e)}")
             return False
 
-    def test_dashboard_api(self) -> bool:
-        """Test dashboard API (comprehensive endpoint)"""
+    def test_valid_login(self) -> bool:
+        """Test valid login with admin credentials"""
         success, response = self.run_test(
-            "Dashboard API",
-            "GET",
-            "observability/dashboard",
-            200
+            "Valid Admin Login",
+            "POST",
+            "auth/login",
+            200,
+            data={"email": "admin@test.com", "password": "test123"},
+            auth_required=False
         )
         
         if success:
-            # Validate dashboard structure
-            expected_sections = ['system', 'business', 'endpoints', 'recent_logs', 'active_alerts', 'health_status']
-            missing_sections = [section for section in expected_sections if section not in response]
-            if missing_sections:
-                print(f"   ⚠️  Missing sections in dashboard: {missing_sections}")
+            # Validate login response structure
+            expected_keys = ['access_token', 'token_type', 'user']
+            missing_keys = [key for key in expected_keys if key not in response]
+            if missing_keys:
+                print(f"   ⚠️  Missing keys in login response: {missing_keys}")
             else:
-                print(f"   ✅ Health status: {response.get('health_status')}")
-                print(f"   ✅ System metrics: {len(response.get('system', {}))} fields")
-                print(f"   ✅ Business metrics: {len(response.get('business', {}))} fields")
-                print(f"   ✅ Endpoints: {len(response.get('endpoints', []))}")
-                print(f"   ✅ Recent logs: {len(response.get('recent_logs', []))}")
-                print(f"   ✅ Active alerts: {len(response.get('active_alerts', []))}")
+                print(f"   ✅ Token type: {response.get('token_type')}")
+                user = response.get('user', {})
+                print(f"   ✅ User email: {user.get('email')}")
+                print(f"   ✅ User role: {user.get('role')}")
         
         return success
 
