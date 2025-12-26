@@ -89,27 +89,49 @@ class SecurityTester:
             return True
         return False
 
-    def test_health_check(self) -> bool:
-        """Test health check endpoint (no auth required)"""
-        success, response = self.run_test(
-            "Health Check",
-            "GET",
-            "observability/health",
-            200,
-            auth_required=False
-        )
+    def test_rate_limiting_login(self) -> bool:
+        """Test rate limiting on login endpoint - 10 requests/minute"""
+        print(f"\n🔍 Testing Login Rate Limiting (10 req/min)...")
         
-        if success:
-            # Validate health response structure
-            expected_keys = ['status', 'timestamp', 'uptime_seconds']
-            missing_keys = [key for key in expected_keys if key not in response]
-            if missing_keys:
-                print(f"   ⚠️  Missing keys in health response: {missing_keys}")
-            else:
-                print(f"   ✅ Health status: {response.get('status')}")
-                print(f"   ✅ Uptime: {response.get('uptime_seconds', 0):.1f} seconds")
+        # Make 12 rapid login attempts to trigger rate limiting
+        attempts = 0
+        rate_limited = False
         
-        return success
+        for i in range(12):
+            try:
+                url = f"{self.base_url}/api/auth/login"
+                response = requests.post(
+                    url, 
+                    json={"email": "test@example.com", "password": "wrongpassword"},
+                    headers={'Content-Type': 'application/json'},
+                    timeout=5
+                )
+                attempts += 1
+                
+                if response.status_code == 429:
+                    rate_limited = True
+                    print(f"   ✅ Rate limiting triggered after {attempts} attempts")
+                    print(f"   ✅ Status: {response.status_code}")
+                    break
+                elif i < 10:
+                    # Small delay between requests
+                    time.sleep(0.1)
+                    
+            except Exception as e:
+                print(f"   ❌ Error during attempt {i+1}: {str(e)}")
+                return False
+        
+        if rate_limited:
+            self.tests_passed += 1
+            print(f"   ✅ Rate limiting working correctly")
+            return True
+        else:
+            print(f"   ❌ Rate limiting not triggered after {attempts} attempts")
+            self.failed_tests.append({
+                'name': 'Login Rate Limiting',
+                'error': f'No 429 response after {attempts} attempts'
+            })
+            return False
 
     def test_system_metrics(self) -> bool:
         """Test system metrics endpoint"""
