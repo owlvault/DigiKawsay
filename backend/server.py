@@ -2544,6 +2544,113 @@ class ObservabilityService:
 
 observability_service = ObservabilityService()
 
+# ============== SECURITY MIDDLEWARE (Phase 8) ==============
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Add security headers to all responses"""
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        
+        # Security Headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        
+        # Cache control for API responses
+        if request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+        
+        return response
+
+# PII Sanitization for logs
+class PIISanitizer:
+    """Sanitize PII from log messages"""
+    
+    PATTERNS = [
+        (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '[EMAIL]'),
+        (r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', '[PHONE]'),
+        (r'\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b', '[CARD]'),
+        (r'password["\']?\s*[:=]\s*["\']?[^"\'&\s]+', 'password=[REDACTED]'),
+        (r'token["\']?\s*[:=]\s*["\']?[^"\'&\s]+', 'token=[REDACTED]'),
+        (r'Bearer\s+[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+', 'Bearer [REDACTED]'),
+    ]
+    
+    @classmethod
+    def sanitize(cls, text: str) -> str:
+        if not text:
+            return text
+        for pattern, replacement in cls.PATTERNS:
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        return text
+
+# Session timeout validation
+async def validate_session_timeout(token_data: dict) -> bool:
+    """Check if session has timed out due to inactivity"""
+    last_activity = token_data.get("last_activity")
+    if last_activity:
+        try:
+            last_time = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+            if datetime.now(timezone.utc) - last_time > timedelta(minutes=SESSION_TIMEOUT_MINUTES):
+                return False
+        except:
+            pass
+    return True
+
+# Login attempt tracking
+def check_login_lockout(email: str) -> bool:
+    """Check if user is locked out due to failed attempts"""
+    if email in failed_login_attempts:
+        attempts = failed_login_attempts[email]
+        if attempts["count"] >= MAX_LOGIN_ATTEMPTS:
+            lockout_until = attempts["last_attempt"] + timedelta(minutes=LOGIN_LOCKOUT_MINUTES)
+            if datetime.now(timezone.utc) < lockout_until:
+                return True
+            else:
+                # Reset after lockout period
+                del failed_login_attempts[email]
+    return False
+
+def record_failed_login(email: str):
+    """Record a failed login attempt"""
+    if email not in failed_login_attempts:
+        failed_login_attempts[email] = {"count": 0, "last_attempt": None}
+    failed_login_attempts[email]["count"] += 1
+    failed_login_attempts[email]["last_attempt"] = datetime.now(timezone.utc)
+
+def clear_failed_logins(email: str):
+    """Clear failed login attempts on successful login"""
+    if email in failed_login_attempts:
+        del failed_login_attempts[email]
+
+# Password strength validation
+def validate_password_strength(password: str) -> Tuple[bool, str]:
+    """Validate password meets security requirements"""
+    if len(password) < PASSWORD_MIN_LENGTH:
+        return False, f"La contraseña debe tener al menos {PASSWORD_MIN_LENGTH} caracteres"
+    if not re.search(r'[A-Z]', password):
+        return False, "La contraseña debe contener al menos una mayúscula"
+    if not re.search(r'[a-z]', password):
+        return False, "La contraseña debe contener al menos una minúscula"
+    if not re.search(r'\d', password):
+        return False, "La contraseña debe contener al menos un número"
+    return True, "OK"
+
+# Input sanitization
+def sanitize_input(text: str, max_length: int = 10000) -> str:
+    """Sanitize user input"""
+    if not text:
+        return text
+    # Truncate
+    text = text[:max_length]
+    # Remove null bytes
+    text = text.replace('\x00', '')
+    # Basic XSS prevention for stored data
+    text = text.replace('<script', '&lt;script').replace('</script', '&lt;/script')
+    return text
+
 # Observability Middleware
 class ObservabilityMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -2569,9 +2676,9 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
                     duration_ms=duration_ms
                 )
                 
-                # Log request
+                # Log request (sanitized)
                 structured_logger.info(
-                    f"{request.method} {request.url.path}",
+                    PIISanitizer.sanitize(f"{request.method} {request.url.path}"),
                     correlation_id=correlation_id,
                     method=request.method,
                     endpoint=request.url.path,
@@ -2586,12 +2693,12 @@ class ObservabilityMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
             structured_logger.error(
-                f"Request error: {str(e)}",
+                PIISanitizer.sanitize(f"Request error: {str(e)}"),
                 correlation_id=correlation_id,
                 method=request.method,
                 endpoint=request.url.path,
                 duration_ms=round(duration_ms, 2),
-                error=str(e)
+                error=PIISanitizer.sanitize(str(e))
             )
             ERRORS_TOTAL.labels(type="exception", endpoint=request.url.path).inc()
             raise
