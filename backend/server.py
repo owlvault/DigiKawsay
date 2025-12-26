@@ -2815,7 +2815,7 @@ def require_permission(permission: str):
 
 # ============== AUTH ROUTES ==============
 
-@auth_router.post("/register", response_model=TokenResponse)
+@auth_router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate):
     existing = await db.users.find_one({"email": user_data.email})
     if existing:
