@@ -2,12 +2,18 @@
 
 import os
 from typing import List
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"  # Ignore extra fields from .env
+    )
     
     # Application
     APP_NAME: str = "DigiKawsay"
@@ -15,13 +21,22 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # MongoDB
-    MONGO_URL: str = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
-    DB_NAME: str = os.environ.get('DB_NAME', 'test_database')
+    MONGO_URL: str = "mongodb://localhost:27017"
+    DB_NAME: str = "test_database"
     
     # JWT Authentication
-    SECRET_KEY: str = os.environ.get('JWT_SECRET_KEY', 'default_secret_key_change_in_prod')
-    ALGORITHM: str = "HS256"
+    JWT_SECRET_KEY: str = "default_secret_key_change_in_prod"
+    JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    
+    # Aliases for compatibility
+    @property
+    def SECRET_KEY(self) -> str:
+        return self.JWT_SECRET_KEY
+    
+    @property
+    def ALGORITHM(self) -> str:
+        return self.JWT_ALGORITHM
     
     # Security - Hardening (Phase 8)
     SESSION_TIMEOUT_MINUTES: int = 30
@@ -35,21 +50,21 @@ class Settings(BaseSettings):
     
     # Privacy & Compliance
     SMALL_GROUP_THRESHOLD: int = 5
-    PII_VAULT_ENCRYPTION_KEY: str = os.environ.get('PII_VAULT_KEY', 'default_vault_key_change_in_prod')
+    PII_VAULT_KEY: str = "default_vault_key_change_in_prod"
+    
+    @property
+    def PII_VAULT_ENCRYPTION_KEY(self) -> str:
+        return self.PII_VAULT_KEY
     
     # CORS
-    CORS_ORIGINS: str = os.environ.get('CORS_ORIGINS', '*')
+    CORS_ORIGINS: str = "*"
     
     @property
     def cors_origins_list(self) -> List[str]:
         return self.CORS_ORIGINS.split(',')
     
     # LLM Integration
-    EMERGENT_LLM_KEY: str = os.environ.get('EMERGENT_LLM_KEY', '')
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    EMERGENT_LLM_KEY: str = ""
 
 
 @lru_cache()
