@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 
 from app.database import get_database
 from app.utils.serializers import serialize_document
-from app.models.governance import AuditLog
+from app.models.compliance import AuditLog
 
 
 def generate_correlation_id() -> str:
