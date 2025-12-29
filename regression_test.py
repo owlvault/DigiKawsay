@@ -126,7 +126,7 @@ class RegressionTester:
             return False
             
         try:
-            url = f"{self.base_url}/api/campaigns"
+            url = f"{self.base_url}/api/campaigns/"
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {self.token}'
