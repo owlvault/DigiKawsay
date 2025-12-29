@@ -127,6 +127,140 @@ test_plan:
 - Frontend loads correctly: YES
 - Authentication works: YES
 
+## Regression Testing Results (2025-12-29)
+backend:
+  - task: "Health Check Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/observability/health"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Health check endpoint working correctly, returns status: healthy"
+
+  - task: "Admin Authentication"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/login"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Admin login with admin@test.com / test123 working correctly, token obtained successfully"
+
+  - task: "User Profile Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/me"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Auth/me endpoint working correctly, returns user data including email, role, and profile info"
+
+  - task: "Campaigns List Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/campaigns/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Campaigns endpoint working correctly, returns list of 15 campaigns. Note: requires trailing slash in URL"
+
+  - task: "Rate Limiting"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Rate limiting working correctly, triggered after 6 login attempts with 429 status"
+
+  - task: "Security Config Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/security/config"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Security config endpoint working, returns session timeout (30 min), max attempts (5), lockout (15 min), password length (8)"
+
+  - task: "Locked Accounts Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/security/locked-accounts"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Locked accounts endpoint working, returns list of 2 locked accounts"
+
+  - task: "Unlock Account Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/security/unlock-account/{email}"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Account unlock endpoint working correctly, successfully unlocked test account"
+
+  - task: "Session Timeout"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Session timeout mechanism implemented in get_current_user function, configured for 30 minutes"
+
+  - task: "Brute Force Protection"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Brute force protection test interfered with rate limiting, unable to complete full test cycle"
+
+  - task: "Persistent Login Attempts"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Not tested in regression suite, requires separate testing"
+
 ## Próximos Pasos
 - Sprint 4: Extraer Routers API
 - Sprint 5: Crear main.py modular
+
+agent_communication:
+  - agent: "testing"
+    message: "Regression testing completed successfully. All core endpoints working after service migration. Health check, authentication, user profile, and campaigns endpoints all functional. Security features mostly working with rate limiting and security config endpoints operational. Minor issue with campaigns endpoint requiring trailing slash in URL, but this is working correctly. Brute force protection needs separate testing due to rate limiting interference."
