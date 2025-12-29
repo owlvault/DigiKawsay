@@ -10,7 +10,7 @@ from community import community_louvain
 
 from app.database import get_database
 from app.utils.serializers import serialize_document
-from app.utils.constants import NetworkNodeType, NetworkEdgeType
+from app.models.network import NodeType, EdgeType
 from app.models.network import NetworkSnapshot, NetworkMetrics
 
 logger = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ class NetworkAnalysisService:
                     "id": node_id,
                     "tenant_id": tenant_id,
                     "campaign_id": campaign_id,
-                    "node_type": NetworkNodeType.PARTICIPANT,
+                    "node_type": NodeType.PARTICIPANT,
                     "label": pseudonym_id,
                     "pseudonym_id": pseudonym_id,
                     "source_id": pseudonym_id,
@@ -96,7 +96,7 @@ class NetworkAnalysisService:
                     "id": node_id,
                     "tenant_id": tenant_id,
                     "campaign_id": campaign_id,
-                    "node_type": cat.get("type", NetworkNodeType.THEME),
+                    "node_type": cat.get("type", NodeType.THEME),
                     "label": cat.get("name", "Tema desconocido"),
                     "source_id": category_id,
                     "metadata": {
@@ -159,7 +159,7 @@ class NetworkAnalysisService:
                             "campaign_id": campaign_id,
                             "source_node_id": participant_node_id,
                             "target_node_id": theme_node_id,
-                            "edge_type": NetworkEdgeType.HABLA_DE,
+                            "edge_type": EdgeType.HABLA_DE,
                             "weight": 1.0,
                             "evidence_links": []
                         })
@@ -180,7 +180,7 @@ class NetworkAnalysisService:
                             "campaign_id": campaign_id,
                             "source_node_id": node_map[t1],
                             "target_node_id": node_map[t2],
-                            "edge_type": NetworkEdgeType.COOCCURRENCE,
+                            "edge_type": EdgeType.CO_OCURRE,
                             "weight": float(count),
                             "evidence_links": []
                         })
@@ -203,7 +203,7 @@ class NetworkAnalysisService:
                             "campaign_id": campaign_id,
                             "source_node_id": node_map[p1],
                             "target_node_id": node_map[p2],
-                            "edge_type": NetworkEdgeType.COMPARTE_TEMA,
+                            "edge_type": EdgeType.COMPARTE_TEMA,
                             "weight": float(len(shared)),
                             "evidence_links": list(shared)
                         })
