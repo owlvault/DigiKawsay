@@ -507,3 +507,133 @@ agent_communication:
 ## Próximos Pasos
 - Sprint 6: Cleanup de server.py
 - Sprint 7: Testing completo de regresión
+
+# Sprint 6 - Server.py Cleanup Regression Test (2025-12-30)
+
+## Refactorización Masiva Completada
+- server.py reducido de 5,331 líneas a 310 líneas
+- Toda la lógica migrada a módulos modulares en /app/backend/app/
+- Arquitectura completamente modular implementada
+
+## Pruebas de Regresión Ejecutadas
+1. Health check en /api/observability/health
+2. Login con admin@test.com / test123
+3. GET /api/auth/me
+4. GET /api/campaigns/ (con trailing slash)
+5. GET /api/users/
+6. GET /api/taxonomy/
+7. GET /api/insights/ y /api/insights/campaign/{campaign_id}
+8. POST /api/auth/register (crear usuario de prueba y verificar login)
+
+backend:
+  - task: "Health Check Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/observability/health"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Health check endpoint working correctly after Sprint 6 server.py cleanup, returns status: healthy with database connection and uptime info"
+
+  - task: "Admin Authentication (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/login"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Admin login working correctly after Sprint 6 cleanup, token obtained successfully with complete user data"
+
+  - task: "User Profile Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/me"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Auth/me endpoint working correctly after Sprint 6 cleanup, returns complete user profile with all fields"
+
+  - task: "Campaigns List Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/campaigns/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Campaigns endpoint working correctly after Sprint 6 cleanup, returns list of 15 campaigns with proper data structure (requires trailing slash)"
+
+  - task: "Users List Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/users/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Users endpoint working correctly after Sprint 6 cleanup, returns list of 140 users with complete user data structure"
+
+  - task: "Taxonomy Categories Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/taxonomy/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Taxonomy endpoint working correctly after Sprint 6 cleanup, returns 12 taxonomy categories with proper structure and descriptions"
+
+  - task: "Insights General Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/insights/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Insights general endpoint working correctly after Sprint 6 cleanup, returns list of 87 insights with complete data structure"
+
+  - task: "Insights Campaign-Specific Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/insights/campaign/{campaign_id}"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Insights campaign-specific endpoint working correctly after Sprint 6 cleanup, properly filters insights by campaign ID"
+
+  - task: "User Registration Endpoint (Post-Sprint 6)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/register"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "User registration endpoint working correctly after Sprint 6 cleanup, successfully creates new users and allows immediate login"
+
+agent_communication:
+  - agent: "testing"
+    message: "Sprint 6 Server.py Cleanup Regression Test completed successfully. All 9 core endpoints tested and working correctly: health check, login, auth/me, campaigns, users, taxonomy, insights (general and campaign-specific), and user registration. 100% success rate (10/10 tests passed) confirms Sprint 6 massive refactoring from 5,331 to 310 lines was successful with no breaking changes. Architecture is fully modular and stable."
