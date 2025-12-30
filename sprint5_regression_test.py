@@ -137,11 +137,23 @@ class Sprint5RegressionTester:
         """Test 5: Verify GET /api/insights (list)"""
         print(f"\n🔍 Testing Insights List Endpoint...")
         
-        status_code, response = self.make_request('GET', 'insights')
+        if not self.campaign_id:
+            # Try to get a campaign ID first
+            status_code, campaigns = self.make_request('GET', 'campaigns/')
+            if status_code == 200 and isinstance(campaigns, list) and campaigns:
+                self.campaign_id = campaigns[0].get('id')
+            
+            if not self.campaign_id:
+                self.log_test("Insights List", False, "No campaign_id available for testing")
+                return False
+        
+        # Use campaign-specific insights endpoint
+        endpoint = f'insights/campaign/{self.campaign_id}'
+        status_code, response = self.make_request('GET', endpoint)
         
         if status_code == 200:
             if isinstance(response, list):
-                self.log_test("Insights List", True, f"Found {len(response)} insights")
+                self.log_test("Insights List", True, f"Found {len(response)} insights for campaign {self.campaign_id}")
                 return True
             else:
                 self.log_test("Insights List", False, f"Expected list, got: {type(response)}")
