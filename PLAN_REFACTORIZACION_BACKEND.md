@@ -160,21 +160,29 @@ Transformar el backend monolítico en una arquitectura modular, mantenible y esc
 
 ---
 
-### Sprint 4: Rutas API (3-4 días)
+### Sprint 4: Rutas API (3-4 días) ✅ COMPLETADO
 **Objetivo:** Separar endpoints en routers modulares
+**Fecha de completación:** 2025-12-30
 
-| Router | Archivo Destino | Endpoints | Líneas Est. |
-|--------|-----------------|-----------|-------------|
-| auth, users | `routes/auth.py`, `routes/users.py` | 11 | ~300 |
-| tenants | `routes/tenants.py` | 2 | ~50 |
-| campaigns, scripts | `routes/campaigns.py`, `routes/scripts.py` | 11 | ~250 |
-| sessions, chat | `routes/sessions.py` | 5 | ~150 |
-| insights, taxonomy | `routes/insights.py` | 11 | ~250 |
-| audit, consent, privacy, reidentification | `routes/compliance.py` | 16 | ~350 |
-| network | `routes/network.py` | 9 | ~300 |
-| initiatives, rituals | `routes/initiatives.py` | 16 | ~400 |
-| governance | `routes/governance.py` | 15 | ~380 |
-| observability | `routes/observability.py` | 12 | ~200 |
+| Router | Archivo Destino | Estado |
+|--------|-----------------|--------|
+| auth | `api/auth.py` | ✅ |
+| users | `api/users.py` | ✅ |
+| tenants | `api/tenants.py` | ✅ |
+| campaigns | `api/campaigns.py` | ✅ |
+| scripts | `api/scripts.py` | ✅ |
+| sessions, chat | `api/sessions.py` | ✅ |
+| insights | `api/insights.py` | ✅ |
+| taxonomy | `api/taxonomy.py` | ✅ |
+| audit, privacy, transcripts | `api/audit.py` | ✅ |
+| consent | `api/consent.py` | ✅ |
+| network | `api/network.py` | ✅ |
+| initiatives, rituals | `api/initiatives.py` | ✅ |
+| governance, reidentification | `api/governance.py` | ✅ |
+| observability | `api/observability.py` | ✅ |
+| segments, invites | `api/segments.py` | ✅ |
+
+**Total:** 16 archivos, 2,781 líneas, 102 rutas registradas
 
 **Entregable:** Todos los endpoints migrados, API 100% funcional.
 
