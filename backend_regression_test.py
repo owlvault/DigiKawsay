@@ -216,7 +216,7 @@ class DigiKawsayRegressionTester:
             "POST", "users/",
             {
                 "email": new_user_email,
-                "password": "test123",
+                "password": "test123456",  # 8+ characters required
                 "full_name": "API Created User",
                 "role": "participant"
             },
