@@ -525,8 +525,12 @@ class DigiKawsayRegressionTester:
         )
         
         if success:
-            version = response.get('version', 'N/A')
-            self.log_test("GET /consent/policy", True, f"Policy version: {version}")
+            if isinstance(response, list):
+                policy_count = len(response)
+                self.log_test("GET /consent/policy", True, f"Found {policy_count} policies")
+            else:
+                version = response.get('version', 'N/A')
+                self.log_test("GET /consent/policy", True, f"Policy version: {version}")
         else:
             self.log_test("GET /consent/policy", False, str(response))
 
