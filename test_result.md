@@ -383,3 +383,97 @@ agent_communication:
 - Sprint 5: Crear main.py modular
 - Sprint 6: Cleanup de server.py
 - Sprint 7: Testing completo
+
+# Sprint 5 - Main.py Modular Regression Test (2025-12-30)
+
+## Pruebas de Regresión Ejecutadas
+1. Health check en /api/observability/health
+2. Login con admin@test.com / test123
+3. Verificar GET /api/auth/me
+4. Verificar GET /api/campaigns
+5. Verificar GET /api/insights/campaign/{campaign_id}
+6. Verificar GET /api/network/snapshots/{campaign_id}
+
+backend:
+  - task: "Health Check Endpoint (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/observability/health"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Health check endpoint working correctly after Sprint 5 modular main.py refactoring, returns status: healthy"
+
+  - task: "Admin Authentication (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/login"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Admin login working correctly after Sprint 5 refactoring, token obtained successfully with user data"
+
+  - task: "User Profile Endpoint (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/me"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Auth/me endpoint working correctly after Sprint 5 refactoring, returns complete user profile data"
+
+  - task: "Campaigns List Endpoint (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/campaigns/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Campaigns endpoint working correctly after Sprint 5 refactoring, returns list of 15 campaigns with proper data structure"
+
+  - task: "Insights List Endpoint (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/insights/campaign/{campaign_id}"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Insights endpoint working correctly after Sprint 5 refactoring, returns campaign-specific insights list (endpoint requires campaign_id parameter)"
+
+  - task: "Network Snapshots Endpoint (Post-Sprint 5)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/network/snapshots/{campaign_id}"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Network snapshots endpoint working correctly after Sprint 5 refactoring, returns snapshots list for specified campaign"
+
+agent_communication:
+  - agent: "testing"
+    message: "Sprint 5 Regression Test completed successfully. All 6 core endpoints tested and working correctly: health check, login, auth/me, campaigns, insights (campaign-specific), and network snapshots. 100% success rate confirms Sprint 5 modular main.py refactoring was successful and no breaking changes introduced. Architecture is stable."
+
+## Estado de los Sprints
+- Sprint 1 (Infraestructura): ✅ COMPLETADO
+- Sprint 2 (Modelos Pydantic): ✅ COMPLETADO
+- Sprint 3 (Services & Utils): ✅ COMPLETADO
+- Sprint 4 (Routers API): ✅ COMPLETADO
+- Sprint 5 (Main.py Modular): ✅ COMPLETADO
