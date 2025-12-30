@@ -26,7 +26,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import database
-from app.database import get_database, client
+from app.database import get_database, get_client, init_database, close_database
 
 # Import API routers
 from app.api import api_router
@@ -159,108 +159,15 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         structured_logger.info("DigiKawsay API started", version="0.9.0")
-        await create_indexes()
+        await init_database()
     
     # Shutdown event
     @app.on_event("shutdown")
     async def shutdown_event():
         structured_logger.info("DigiKawsay API shutting down")
-        client.close()
+        await close_database()
     
     return app
-
-
-# ============== DATABASE INDEXES ==============
-
-async def create_indexes():
-    """Create MongoDB indexes for performance optimization."""
-    db = get_database()
-    indexes_created = 0
-    indexes_failed = 0
-    
-    async def safe_create_index(collection, index_spec, **kwargs):
-        nonlocal indexes_created, indexes_failed
-        try:
-            await collection.create_index(index_spec, **kwargs)
-            indexes_created += 1
-        except Exception:
-            indexes_failed += 1
-    
-    # Users collection
-    await safe_create_index(db.users, "email", unique=True)
-    await safe_create_index(db.users, "tenant_id")
-    await safe_create_index(db.users, "role")
-    await safe_create_index(db.users, [("email", 1), ("is_active", 1)])
-    
-    # Sessions collection
-    await safe_create_index(db.sessions, "participant_id")
-    await safe_create_index(db.sessions, "campaign_id")
-    await safe_create_index(db.sessions, "status")
-    await safe_create_index(db.sessions, [("campaign_id", 1), ("status", 1)])
-    await safe_create_index(db.sessions, "created_at")
-    
-    # Campaigns collection
-    await safe_create_index(db.campaigns, "tenant_id")
-    await safe_create_index(db.campaigns, "status")
-    await safe_create_index(db.campaigns, [("tenant_id", 1), ("status", 1)])
-    
-    # Insights collection
-    await safe_create_index(db.insights, "campaign_id")
-    await safe_create_index(db.insights, "tenant_id")
-    await safe_create_index(db.insights, "category")
-    await safe_create_index(db.insights, "status")
-    await safe_create_index(db.insights, [("campaign_id", 1), ("status", 1)])
-    
-    # Audit logs collection
-    await safe_create_index(db.audit_logs, "user_id")
-    await safe_create_index(db.audit_logs, "action")
-    await safe_create_index(db.audit_logs, "resource_type")
-    await safe_create_index(db.audit_logs, "tenant_id")
-    await safe_create_index(db.audit_logs, "timestamp")
-    await safe_create_index(db.audit_logs, [("tenant_id", 1), ("timestamp", -1)])
-    await safe_create_index(db.audit_logs, [("user_id", 1), ("action", 1)])
-    
-    # PII Vault collection
-    await safe_create_index(db.pii_vault, "pseudonym", unique=True, sparse=True)
-    await safe_create_index(db.pii_vault, "tenant_id")
-    
-    # Consent policies
-    await safe_create_index(db.consent_policies, "tenant_id")
-    await safe_create_index(db.consent_policies, [("tenant_id", 1), ("is_active", 1)])
-    
-    # Scripts collection
-    await safe_create_index(db.scripts, "campaign_id")
-    await safe_create_index(db.scripts, [("campaign_id", 1), ("version", -1)])
-    
-    # Network snapshots
-    await safe_create_index(db.network_snapshots, "campaign_id")
-    await safe_create_index(db.network_snapshots, "created_at")
-    
-    # Initiatives
-    await safe_create_index(db.initiatives, "campaign_id")
-    await safe_create_index(db.initiatives, "status")
-    await safe_create_index(db.initiatives, [("campaign_id", 1), ("priority_score", -1)])
-    
-    # Rituals
-    await safe_create_index(db.rituals, "campaign_id")
-    await safe_create_index(db.rituals, "status")
-    
-    # Access policies
-    await safe_create_index(db.access_policies, "tenant_id")
-    await safe_create_index(db.access_policies, [("tenant_id", 1), ("is_active", 1)])
-    
-    # Login attempts (with TTL)
-    await safe_create_index(db.login_attempts, "email")
-    await safe_create_index(db.login_attempts, "ip_address")
-    await safe_create_index(db.login_attempts, "timestamp")
-    await safe_create_index(db.login_attempts, [("email", 1), ("timestamp", -1)])
-    await safe_create_index(db.login_attempts, "timestamp", expireAfterSeconds=2592000)
-    
-    structured_logger.info(
-        f"MongoDB indexes initialization complete",
-        indexes_created=indexes_created,
-        indexes_skipped=indexes_failed
-    )
 
 
 # ============== APPLICATION INSTANCE ==============
