@@ -261,6 +261,83 @@ backend:
 - Sprint 4: Extraer Routers API
 - Sprint 5: Crear main.py modular
 
+## Sprint 4 - Router Migration Regression Test (2025-12-29)
+
+backend:
+  - task: "Health Check Endpoint (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/observability/health"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Health check endpoint working correctly after router migration, returns status: healthy with database connection and uptime info"
+
+  - task: "Admin Authentication (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "POST /api/auth/login"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Admin login working correctly after router migration, token obtained successfully with user data"
+
+  - task: "User Profile Endpoint (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/auth/me"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Auth/me endpoint working correctly after router migration, returns complete user profile data"
+
+  - task: "Campaigns List Endpoint (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/campaigns/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Campaigns endpoint working correctly after router migration, returns list of 15 campaigns with proper data structure"
+
+  - task: "Users List Endpoint (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/users/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Users endpoint working correctly after router migration, returns list of 140 users (admin access verified)"
+
+  - task: "Taxonomy Categories Endpoint (Post-Router Migration)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    endpoint: "GET /api/taxonomy/"
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "Taxonomy endpoint working correctly after router migration, returns taxonomy categories with proper structure"
+
 agent_communication:
   - agent: "testing"
     message: "Regression testing completed successfully. All core endpoints working after service migration. Health check, authentication, user profile, and campaigns endpoints all functional. Security features mostly working with rate limiting and security config endpoints operational. Minor issue with campaigns endpoint requiring trailing slash in URL, but this is working correctly. Brute force protection needs separate testing due to rate limiting interference."
+  - agent: "testing"
+    message: "Sprint 4 Router Migration Regression Test completed successfully. All 6 core endpoints tested and working correctly: health check, login, auth/me, campaigns, users, and taxonomy. 100% success rate confirms router refactoring was successful and no breaking changes introduced."
