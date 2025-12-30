@@ -649,3 +649,39 @@ agent_communication:
 ## Próximos Pasos
 - Sprint 7: Testing completo de regresión final
 - Preparación para producción
+
+# Sprint 6 - Cleanup de server.py (2025-12-30)
+
+## Resultados
+- server.py original: 5,331 líneas
+- server.py nuevo: 310 líneas
+- **Reducción: 94% (5,021 líneas)**
+
+## Componentes en el nuevo server.py
+- Application Factory (create_app)
+- ObservabilityMiddleware
+- SecurityHeadersMiddleware
+- PIISanitizer
+- Database indexes creation
+- Lifecycle events (startup/shutdown)
+- Root endpoints (/, /health)
+
+## Verificación
+- Testing subagent: 100% success rate (10/10 tests)
+- Health check: PASSED
+- Authentication: PASSED
+- All core endpoints: PASSED
+
+## Backup
+- Archivo: /app/backend/server.py.backup (5,331 líneas)
+
+## Estado de los Sprints
+- Sprint 1 (Infraestructura): ✅ COMPLETADO
+- Sprint 2 (Modelos Pydantic): ✅ COMPLETADO
+- Sprint 3 (Services & Utils): ✅ COMPLETADO
+- Sprint 4 (Routers API): ✅ COMPLETADO
+- Sprint 5 (Main Application): ✅ COMPLETADO
+- Sprint 6 (Cleanup): ✅ COMPLETADO
+
+## Próximo Paso
+- Sprint 7: Testing final de regresión completo
