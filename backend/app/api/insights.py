@@ -9,7 +9,7 @@ from app.utils.serializers import serialize_document
 from app.utils.constants import AuditAction
 from app.core.dependencies import get_current_user
 from app.services import audit_service, insight_extraction_service, suppression_service
-from app.models import Insight, InsightCreate, InsightUpdate, InsightValidation
+from app.models import Insight, InsightCreate, InsightUpdate, ValidationResponse
 
 insight_router = APIRouter(prefix="/insights", tags=["Insights"])
 
@@ -126,7 +126,7 @@ async def delete_insight(insight_id: str, current_user: dict = Depends(get_curre
 @insight_router.post("/{insight_id}/validate")
 async def validate_insight(
     insight_id: str,
-    validation: InsightValidation,
+    validation: ValidationResponse,
     current_user: dict = Depends(get_current_user)
 ):
     """Validate an insight (member checking)."""
@@ -138,9 +138,8 @@ async def validate_insight(
     validation_record = {
         "user_id": current_user["id"],
         "user_role": current_user["role"],
-        "status": validation.status,
-        "feedback": validation.feedback,
-        "suggested_edit": validation.suggested_edit,
+        "validated": validation.validated,
+        "comment": validation.comment,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
     
@@ -158,7 +157,7 @@ async def validate_insight(
         action=AuditAction.DATA_VIEWED,
         resource_type="insight",
         resource_id=insight_id,
-        details={"validation_status": validation.status}
+        details={"validated": validation.validated}
     )
     
     return {"message": "Validación registrada"}
