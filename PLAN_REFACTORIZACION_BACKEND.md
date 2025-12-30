@@ -208,9 +208,29 @@ Transformar el backend monolítico en una arquitectura modular, mantenible y esc
 
 **Nota:** El archivo `server.py` original sigue siendo el punto de entrada
 debido a la configuración de supervisor (archivo de solo lectura).
-| PIISanitizer | `middleware/security.py` | P1 |
-| Documentación OpenAPI | Decoradores en routes | P2 |
-| Limpieza server.py | Reducir a ~100 líneas | P0 |
+
+---
+
+### Sprint 6: Cleanup de server.py (1 día) ✅ COMPLETADO
+**Objetivo:** Reducir server.py a un wrapper minimalista
+**Fecha de completación:** 2025-12-30
+
+| Métrica | Antes | Después | Reducción |
+|---------|-------|---------|-----------|
+| Líneas de código | 5,331 | 310 | 94% |
+| Funcionalidad | Monolítico | Modular | ✅ |
+| Mantenibilidad | Baja | Alta | ✅ |
+
+**Contenido del nuevo server.py:**
+- Application Factory (create_app)
+- ObservabilityMiddleware
+- SecurityHeadersMiddleware
+- PIISanitizer
+- Database indexes creation
+- Lifecycle events (startup/shutdown)
+- Root endpoints (/, /health)
+
+**Backup creado:** `/app/backend/server.py.backup` (5,331 líneas)
 
 **Entregable:** Backend completamente modularizado, `server.py` solo como entry point.
 
