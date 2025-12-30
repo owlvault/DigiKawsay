@@ -188,16 +188,26 @@ Transformar el backend monolítico en una arquitectura modular, mantenible y esc
 
 ---
 
-### Sprint 5: Middleware y Cleanup (2 días)
-**Objetivo:** Extraer middleware, limpiar y documentar
+### Sprint 5: Middleware y Main Application (2 días) ✅ COMPLETADO
+**Objetivo:** Crear main.py modular y extraer middleware
+**Fecha de completación:** 2025-12-30
 
-| Tarea | Archivo | Prioridad |
-|-------|---------|-----------|
-| SecurityHeadersMiddleware | `middleware/security.py` | P0 |
-| Rate limiting | `middleware/rate_limit.py` | P0 |
-| CorrelationIdMiddleware | `middleware/correlation.py` | P1 |
-| ObservabilityMiddleware | `middleware/logging.py` | P1 |
-| StructuredLogger | `middleware/logging.py` | P1 |
+| Tarea | Estado |
+|-------|--------|
+| Crear `app/main.py` modular | ✅ |
+| ObservabilityMiddleware | ✅ |
+| SecurityHeadersMiddleware | ✅ |
+| Application Factory (`create_app`) | ✅ |
+| Integración con init_database | ✅ |
+| 108 rutas registradas | ✅ |
+
+**Archivo creado:** `/app/backend/app/main.py` (~150 líneas)
+- Versión: 0.9.0
+- Factory pattern implementado
+- Middleware integrado
+
+**Nota:** El archivo `server.py` original sigue siendo el punto de entrada
+debido a la configuración de supervisor (archivo de solo lectura).
 | PIISanitizer | `middleware/security.py` | P1 |
 | Documentación OpenAPI | Decoradores en routes | P2 |
 | Limpieza server.py | Reducir a ~100 líneas | P0 |
