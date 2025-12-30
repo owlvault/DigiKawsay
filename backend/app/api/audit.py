@@ -9,7 +9,6 @@ from app.utils.serializers import serialize_document
 from app.utils.constants import AuditAction
 from app.core.dependencies import get_current_user
 from app.services import audit_service, pseudonymization_service
-from app.models import AuditLogResponse
 
 audit_router = APIRouter(prefix="/audit", tags=["Audit"])
 privacy_router = APIRouter(prefix="/privacy", tags=["Privacy"])
